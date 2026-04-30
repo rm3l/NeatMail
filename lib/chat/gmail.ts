@@ -7,12 +7,12 @@ import { redis } from "../redis";
 const endpoint = process.env.AZURE_ENDPOINT!;
 const apiKey = process.env.AZURE_API_KEY!;
 
-const openai = new OpenAI({
-  baseURL: endpoint,
-  apiKey,
-});
+// const openai = new OpenAI({
+//   baseURL: endpoint,
+//   apiKey,
+// });
 
-
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
   {
@@ -117,7 +117,8 @@ const SYSTEM_PROMPT = `You are an intelligent Gmail assistant inside a Telegram 
 When the user asks about their emails, execute ALL necessary steps in a single agentic run without stopping to ask the user for confirmation:
 1. Decide the best Gmail search query — use broad operators first, then narrow if too many results
 2. Call search_gmail with that query
-3. If the user wants to READ, FORWARD, or SUMMARIZE an email: ALWAYS call get_email_content FIRST — NEVER summarize or describe email content based on the snippet alone
+3. If the user wants to READ, FORWARD a specific email: call get_email_content
+   If the user wants to SUMMARIZE MULTIPLE emails: use snippets directly, skip get_email_content
 4. If the user asks for files/attachments, call list_email_attachments, then send_attachment_to_telegram — all in the same run
 5. Answer concisely — the user is on Telegram
 
