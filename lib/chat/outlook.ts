@@ -15,9 +15,8 @@ const openai = new OpenAI({
 async function searchOutlook(userId: string, query: string, maxResults = 10) {
   const client = await getGraphClient(userId);
   try {
-    const formattedQuery = query.startsWith('"') && query.endsWith('"') ? query : `"${query}"`;
     const listRes = await client.api("/me/messages")
-      .search(formattedQuery)
+      .search(query)
       .top(maxResults)
       .select("id,subject,from,receivedDateTime,bodyPreview")
       .get();
@@ -71,9 +70,10 @@ const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
 Returns emails with subject, sender, date, and snippet.
 Use operators like:
   from:, to:, subject:, hasattachments:true, isread:false
+IMPORTANT: Do NOT wrap the entire query string in quotes. You MUST wrap email addresses/terms in double quotes.
 Examples:
-  "from:john@company.com"
-  "subject:(payment OR invoice) received:last month"`,
+  from:"john@company.com"
+  subject:"invoice" OR subject:"payment"`,
       parameters: {
         type: "object",
         properties: {
