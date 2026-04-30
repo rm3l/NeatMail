@@ -191,10 +191,16 @@ export async function checkAndForwardToTelegram(
 
     await sendTelegramMessage(data.chat_id, message);
   } else {
+    const emailTrimmed = senderEmail.trim();
+    const domainPart = emailTrimmed.includes("@") ? emailTrimmed.split("@").pop()! : emailTrimmed;
+
     const match = await db.integrationRules.findMany({
       where: {
         user_id: userId,
-        AND: [{ domain: senderEmail.trim() }, { tag_id: tagId }],
+        tag_id: tagId,
+        domain: {
+          in: [emailTrimmed, domainPart, `@${domainPart}`],
+        },
       },
     });
 
