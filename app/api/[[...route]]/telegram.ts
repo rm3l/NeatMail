@@ -350,11 +350,10 @@ const app = new Hono()
         } else {
           try {
             const subscription = await getUserSubscribed(integration.user_id);
-            if(subscription.subscribed===false){
-              await sendTelegramMessage(chatId,"You are not subscribed")
-              return ctx.json({ ok: true }, 200);
-            }
-            await sendTelegramMessage(chatId, "Searching and thinking...");
+            // if(subscription.subscribed===false){
+            //   await sendTelegramMessage(chatId,"You are not subscribed")
+            //   return ctx.json({ ok: true }, 200);
+            // }
             await inngest.send({
               name: "telegram/process.query",
               data: {
