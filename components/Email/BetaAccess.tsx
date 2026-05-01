@@ -40,7 +40,7 @@ export default function BetaAccessEmail({
             </Text>
 
             <Heading as="h3" style={subheading}>
-              What happens once you connect Gmail:
+              What happens once you connect your inbox:
             </Heading>
 
             <Text style={bullet}>• Important emails get separated from low-value noise automatically</Text>
@@ -66,11 +66,11 @@ export default function BetaAccessEmail({
             <Hr style={hr} />
 
             <Heading as="h3" style={subheading}>
-              Is connecting Gmail safe?
+              Is connecting inbox safe?
             </Heading>
 
             <Text style={paragraph}>
-              Yes — NeatMail uses Google's official Gmail permission flow and
+              Yes — NeatMail uses Google/Microsoft's official permission flow and
               only requests the access needed to organize, summarize, and draft
               emails on your behalf.
             </Text>
