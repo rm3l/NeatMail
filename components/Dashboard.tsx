@@ -2,6 +2,7 @@
 
 import { useGetUserMailsThisMonth } from "@/features/stats/use-get-mail-thisMonth"
 import { useUser } from "@clerk/nextjs"
+import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from "lucide-react"
 import { LabelDistribution } from "./LabelDistribution"
 import Clutter from "./Dashboard/Clutter"
 import HeatMap from "./Dashboard/HeatMap"
@@ -21,6 +22,33 @@ const Dashboard = () => {
     };
 
     const greeting = getGreeting();
+
+    const renderTrend = (percentChange: number | null | undefined) => {
+        if (percentChange === undefined || percentChange === null) return null;
+        if (percentChange === 0) {
+            return (
+                <div className="flex items-center text-xs text-gray-500 mt-2">
+                    <MinusIcon className="w-3 h-3 mr-1" />
+                    <span>Same as last month</span>
+                </div>
+            );
+        }
+        const isPositive = percentChange > 0;
+        const Icon = isPositive ? ArrowUpIcon : ArrowDownIcon;
+        // Reversed colors since less labeled emails / time is generally "less", but maybe "more time saved" is good?
+        // Let's stick to standard: up = green, down = red.
+        const colorClass = isPositive ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50";
+
+        return (
+            <div className="flex items-center mt-2 group">
+                <span className={`flex items-center px-1.5 py-0.5 rounded-md text-xs font-semibold ${colorClass}`}>
+                    <Icon className="w-3 h-3 mr-1" />
+                    {Math.abs(percentChange)}%
+                </span>
+                <span className="text-xs font-medium text-gray-500 ml-2">vs last month</span>
+            </div>
+        );
+    };
 
     return (
         <div className="max-w-7xl mx-auto space-y-8">
@@ -53,8 +81,9 @@ const Dashboard = () => {
                             Emails labelled this month
                         </p>
                         <p className="text-2xl font-semibold text-gray-900 mt-1">
-                            {isLoading ? "..." : data?.data || 0}
+                            {isLoading ? "..." : data?.current || 0}
                         </p>
+                        {!isLoading && renderTrend(data?.percentChange)}
                     </div>
                 </div>
 
@@ -66,13 +95,14 @@ const Dashboard = () => {
                         </p>
                         <p className="text-xl font-semibold text-gray-900 mt-1">
                             {(() => {
-                                const seconds = (data?.data ?? 0) * 5;
+                                const seconds = (data?.current ?? 0) * 5;
 
                                 if (seconds < 60) return `${seconds} seconds`;
                                 if (seconds < 3600) return `${(seconds / 60).toFixed(1)} minutes`;
                                 return `${(seconds / 3600).toFixed(1)} hours`;
                             })()}
                         </p>
+                        {!isLoading && renderTrend(data?.percentChange)}
                     </div>
                 </div>
 
@@ -83,8 +113,9 @@ const Dashboard = () => {
                             Avg emails / day
                         </p>
                         <p className="text-2xl font-semibold text-gray-900 mt-1">
-                            {Math.ceil((data?.data ?? 0) / 30)}
+                            {Math.ceil((data?.current ?? 0) / 30)}
                         </p>
+                        {!isLoading && renderTrend(data?.percentChange)}
                     </div>
 
                 </div>

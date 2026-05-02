@@ -144,20 +144,46 @@ const app = new Hono()
   
       const endOfPeriod = new Date(now);
   
-      const data = await db.email_tracked.count({
+      const currentCount = await db.email_tracked.count({
         where: {
           user_id: userId,
-          tag_id: {
-            not: null,
-          },
+          tag_id: { not: null },
           created_at: {
             gte: startOfPeriod,
             lt: endOfPeriod,
           },
         },
       });
-  
-      return ctx.json({ data }, 200);
+
+      const startOfPrevious = new Date(startOfPeriod);
+      startOfPrevious.setDate(startOfPrevious.getDate() - 30);
+
+      const previousCount = await db.email_tracked.count({
+        where: {
+          user_id: userId,
+          tag_id: { not: null },
+          created_at: {
+            gte: startOfPrevious,
+            lt: startOfPeriod,
+          },
+        },
+      });
+
+      const difference = currentCount - previousCount;
+      const percentChange =
+        previousCount > 0
+          ? Number(((difference / previousCount) * 100).toFixed(1))
+          : null;
+
+      return ctx.json(
+        {
+          current: currentCount,
+          previous: previousCount,
+          difference,
+          percentChange,
+        },
+        200
+      );
     })
 
   .get("/mailsByDay", async (ctx) => {
