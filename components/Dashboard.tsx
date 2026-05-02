@@ -3,6 +3,7 @@
 import { useGetUserMailsThisMonth } from "@/features/stats/use-get-mail-thisMonth";
 import { useUser } from "@clerk/nextjs";
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from "lucide-react";
+import { useMemo } from "react";
 import { LabelDistribution } from "./LabelDistribution";
 import Clutter from "./Dashboard/Clutter";
 import HeatMap from "./Dashboard/HeatMap";
@@ -52,7 +53,7 @@ const Dashboard = () => {
     return { text: "Good Evening", subtitle: pick(subtitles.evening) };
   };
 
-  const greeting = getGreeting();
+  const greeting = useMemo(() => getGreeting(), []);
 
   const renderTrend = (percentChange: number | null | undefined) => {
     if (percentChange === undefined || percentChange === null) return null;
@@ -107,10 +108,12 @@ const Dashboard = () => {
             <p className="text-xs font-bold text-gray-500 tracking-wider uppercase">
               Emails labelled this week
             </p>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">
-              {isLoading ? "..." : data?.current || 0}
-            </p>
-            {!isLoading && renderTrend(data?.percentChange)}
+            <div className="w-full flex justify-between items-center">
+              <p className="text-2xl font-semibold text-gray-900 mt-1">
+                {isLoading ? "..." : data?.current || 0}
+              </p>
+              {!isLoading && renderTrend(data?.percentChange)}
+            </div>
           </div>
         </div>
 
