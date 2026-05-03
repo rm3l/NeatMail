@@ -5,7 +5,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { activateWatch } from "@/lib/gmail";
 import { updateHistoryId, updateOutlookId } from "@/lib/supabase";
 import { createOutlookSubscription } from "@/lib/outlook";
-import { archiveMessages as archiveGmailMessages } from "@/lib/gmail";
+import {trashMessages as archiveGmailMessages } from "@/lib/gmail";
 import { archiveMessages as archiveOutlookMessages } from "@/lib/outlook";
 import { Resend } from "resend";
 import { handleWatchDeactivation } from "@/lib/payement";
@@ -694,13 +694,13 @@ const app = new Hono()
             try {
               const archiveResult = await archiveGmailMessages(userId, messageIds);
               if (archiveResult.success) {
-                results.archivedGmail += archiveResult.archived || 0;
+                results.archivedGmail += archiveResult.trashed || 0;
                 // Only update archive_at for successfully archived IDs
-                if (archiveResult.archivedIds && archiveResult.archivedIds.length > 0) {
+                if (archiveResult.trashedIds && archiveResult.trashedIds.length > 0) {
                   await db.email_tracked.updateMany({
                     where: {
                       user_id: userId,
-                      message_id: { in: archiveResult.archivedIds },
+                      message_id: { in: archiveResult.trashedIds },
                     },
                     data: {
                       archive_at: now,

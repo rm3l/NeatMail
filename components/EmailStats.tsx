@@ -203,7 +203,7 @@ const EmailStats = () => {
             className="font-medium "
             title={getDomainLabel(row.original.domain)}
           >
-            {truncateLabel(getDomainLabel(row.original.domain), 22)}
+            {truncateLabel(getDomainLabel(row.original.domain), 30)}
           </div>
         ),
         sortingFn: "alphanumeric",
