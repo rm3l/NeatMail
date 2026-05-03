@@ -349,7 +349,7 @@ const EmailStats = () => {
           }
           className="max-w-sm"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-between">
           <span className="text-sm font-medium text-muted-foreground text-nowrap ">
             Archive after:
           </span>
