@@ -65,6 +65,11 @@ const getDomainLabel = (domain: string | null): string => {
   return domain?.trim() || "Unknown sender";
 };
 
+const truncateLabel = (value: string, maxLength: number): string => {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}...`;
+};
+
 const normalizeRows = (value: unknown): EmailStatsRow[] => {
   if (Array.isArray(value)) {
     return value as EmailStatsRow[];
@@ -231,10 +236,10 @@ const EmailStats = () => {
         ),
         cell: ({ row }) => (
           <div
-            className="max-w-50 truncate font-medium sm:max-w-md"
+            className="font-medium "
             title={getDomainLabel(row.original.domain)}
           >
-            {getDomainLabel(row.original.domain)}
+            {truncateLabel(getDomainLabel(row.original.domain), 22)}
           </div>
         ),
         sortingFn: "alphanumeric",
