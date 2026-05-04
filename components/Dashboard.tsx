@@ -8,6 +8,7 @@ import { LabelDistribution } from "./LabelDistribution";
 import Clutter from "./Dashboard/Clutter";
 import HeatMap from "./Dashboard/HeatMap";
 import MailsByDay from "./Dashboard/MailsByDay";
+import MostEmails from "./Dashboard/MostEmails";
 
 const subtitles = {
   morning: [
@@ -150,14 +151,17 @@ const Dashboard = () => {
       </div>
 
       {/* Charts & Distribution Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <LabelDistribution />
         </div>
         <div className="lg:col-span-1">
           <Clutter />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
+          <MostEmails />
+        </div>
+        <div className="lg:col-span-3">
           <MailsByDay />
         </div>
       </div>

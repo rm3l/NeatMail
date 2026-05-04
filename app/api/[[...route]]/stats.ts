@@ -46,6 +46,38 @@ const app = new Hono()
     },200);
   })
 
+  .get('/mostEmails',async(ctx)=>{
+    const { userId } = await auth();
+    if (!userId) {
+      return ctx.json({ error: "Unuathorized" }, 401);
+    }
+
+    const topSenders = await db.email_tracked.groupBy({
+      by: ["domain"],
+      where: {
+        user_id: userId,
+        domain: { not: null },
+      },
+      _count: { message_id: true },
+      orderBy: {
+        _count: { message_id: "desc" },
+      },
+      take: 3,
+    });
+
+    const mostEmailsData = await Promise.all(
+      topSenders.map(async (source) => ({
+        rawDomain: source.domain,
+        domain: source.domain ? await decryptDomain(source.domain) : "",
+        count: source._count.message_id,
+      }))
+    );
+
+    return ctx.json({
+      mostEmailsData,
+    }, 200);
+  })
+
   .get("/labelsThisWeek", async (ctx) => {
     const { userId } = await auth();
 
