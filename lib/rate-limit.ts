@@ -57,7 +57,7 @@ export const gmailWebhookLimiter = new CustomRateLimit({
 
 export const apiLimiter = new CustomRateLimit({
   redis,
-  limit: 50,
+  limit: 300,
   window: '1 m',
   prefix: 'ratelimit:api',
 });

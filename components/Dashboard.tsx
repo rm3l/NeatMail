@@ -3,7 +3,7 @@
 import { useGetUserMailsThisMonth } from "@/features/stats/use-get-mail-thisMonth";
 import { useUser } from "@clerk/nextjs";
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { differenceInDays, subDays } from "date-fns";
 import { DatePickerWithRange } from "./DatePickerWithRange";
@@ -48,13 +48,21 @@ const Dashboard = () => {
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+  const [debouncedDate, setDebouncedDate] = useState<DateRange | undefined>(date);
 
-  const from = date?.from?.toISOString();
-  const to = date?.to?.toISOString();
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedDate(date);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [date]);
+
+  const from = debouncedDate?.from?.toISOString();
+  const to = debouncedDate?.to?.toISOString();
 
   const totalDays =
-    date?.from && date?.to
-      ? Math.max(differenceInDays(date.to, date.from), 1)
+    debouncedDate?.from && debouncedDate?.to
+      ? Math.max(differenceInDays(debouncedDate.to, debouncedDate.from), 1)
       : 1;
 
   const { data, isLoading, isError } = useGetUserMailsThisMonth(from, to);
