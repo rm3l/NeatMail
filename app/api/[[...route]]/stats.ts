@@ -19,12 +19,19 @@ const app = new Hono()
       return ctx.json({ error: "Unuathorized" }, 401);
     }
 
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
+    const dateFilter: any = {};
+    if (fromStr) dateFilter.gte = new Date(fromStr);
+    if (toStr) dateFilter.lte = new Date(toStr);
+
     const clutterSources = await db.email_tracked.groupBy({
       by: ["domain"],
       where: {
         user_id: userId,
         is_read: false,
         domain: { not: null },
+        ...(Object.keys(dateFilter).length > 0 && { created_at: dateFilter }),
       },
       _count: { message_id: true },
       orderBy: {
@@ -52,11 +59,18 @@ const app = new Hono()
       return ctx.json({ error: "Unuathorized" }, 401);
     }
 
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
+    const dateFilter: any = {};
+    if (fromStr) dateFilter.gte = new Date(fromStr);
+    if (toStr) dateFilter.lte = new Date(toStr);
+
     const topSenders = await db.email_tracked.groupBy({
       by: ["domain"],
       where: {
         user_id: userId,
         domain: { not: null },
+        ...(Object.keys(dateFilter).length > 0 && { created_at: dateFilter }),
       },
       _count: { message_id: true },
       orderBy: {
@@ -85,17 +99,22 @@ const app = new Hono()
       return ctx.json({ error: "Unauthorized" }, 401);
     }
 
-    const now = new Date();
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
 
+    const now = new Date();
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - 7);
+
+    const fromDate = fromStr ? new Date(fromStr) : startOfWeek;
+    const toDate = toStr ? new Date(toStr) : now;
 
     const totalThisWeek = await db.email_tracked.count({
       where: {
         user_id: userId,
         created_at: {
-          gte: startOfWeek,
-          lte: now,
+          gte: fromDate,
+          lte: toDate,
         },
       },
     });
@@ -108,8 +127,8 @@ const app = new Hono()
           not: null,
         },
         created_at: {
-          gte: startOfWeek,
-          lte: now,
+          gte: fromDate,
+          lte: toDate,
         },
       },
       _count: {
@@ -169,11 +188,19 @@ const app = new Hono()
         return ctx.json({ error: "Unauthorized" }, 401);
       }
   
+      const fromStr = ctx.req.query("from");
+      const toStr = ctx.req.query("to");
+
       const now = new Date();
   
-      const startOfPeriod = new Date(now);
-    startOfPeriod.setDate(startOfPeriod.getDate() - 7);
-      const endOfPeriod = new Date(now);
+      let startOfPeriod = new Date(now);
+      startOfPeriod.setDate(startOfPeriod.getDate() - 7);
+      let endOfPeriod = new Date(now);
+
+      if (fromStr) startOfPeriod = new Date(fromStr);
+      if (toStr) endOfPeriod = new Date(toStr);
+
+      const periodDuration = endOfPeriod.getTime() - startOfPeriod.getTime();
   
       const currentCount = await db.email_tracked.count({
         where: {
@@ -186,8 +213,7 @@ const app = new Hono()
         },
       });
 
-      const startOfPrevious = new Date(startOfPeriod);
-      startOfPrevious.setDate(startOfPrevious.getDate() - 7);
+      const startOfPrevious = new Date(startOfPeriod.getTime() - periodDuration);
 
       const previousCount = await db.email_tracked.count({
         where: {
@@ -217,61 +243,7 @@ const app = new Hono()
       );
     })
 
-  .get("/mailsByDay", async (ctx) => {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return ctx.json({ error: "Unauthorized" }, 401);
-    }
-
-    const now = new Date();
-    // To calculate growth rate we need previous days too.
-    // Let's get 8 days to calculate growth for 7 days.
-    const startOfPeriod = new Date(now);
-    startOfPeriod.setDate(startOfPeriod.getDate() - 7);
-    startOfPeriod.setHours(0, 0, 0, 0);
-
-    const rawData = await db.$queryRaw<{ date_str: string; email_count: number }[]>`
-      SELECT 
-        TO_CHAR(created_at, 'YYYY-MM-DD') as date_str,
-        CAST(COUNT(*) AS INTEGER) as email_count
-      FROM "public"."email_tracked"
-      WHERE user_id = ${userId}
-        AND tag_id IS NOT NULL
-        AND created_at >= ${startOfPeriod}
-      GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
-      ORDER BY date_str ASC;
-    `;
-
-    // Map into last 7 days array
-    const result = [];
-    let previousCount = 0;
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const month = d.toLocaleString("default", { month: "short" });
-      const day = d.getDate();
-      const label = `${month} ${day}`;
-
-      const matched = rawData.find((r) => r.date_str === dateStr);
-      const count = matched ? matched.email_count : 0;
-
-      let timeSaved = count * 5;
-
-      result.push({
-        date: label,
-        total: count,
-        timeSaved: timeSaved,
-      });
-
-      previousCount = count;
-    }
-
-    return ctx.json({ data: result }, 200);
-  })
-
+ 
   // 4. Inbox Traffic / Focus Heatmap (Activity by Day & Hour)
   .get("/traffic-heatmap", async (ctx) => {
     const { userId } = await auth();
@@ -279,18 +251,39 @@ const app = new Hono()
       return ctx.json({ error: "Unuathorized" }, 401);
     }
 
-    // Using a raw query to extract Date parts in Postgres.
-    // DOW (Day Of Week): 0 = Sunday, 1 = Monday, etc.
-    const trafficData = await db.$queryRaw<TrafficData[]>`
-      SELECT 
-        EXTRACT(DOW FROM created_at) as day_of_week,
-        EXTRACT(HOUR FROM created_at) as hour_of_day,
-        CAST(COUNT(*) AS INTEGER) as email_count
-      FROM "public"."email_tracked"
-      WHERE user_id = ${userId}
-      GROUP BY EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)
-      ORDER BY day_of_week, hour_of_day;
-    `;
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
+
+    let trafficData: TrafficData[] = [];
+
+    if (fromStr || toStr) {
+      const startOfPeriod = fromStr ? new Date(fromStr) : new Date(0);
+      const endOfPeriod = toStr ? new Date(toStr) : new Date();
+
+      trafficData = await db.$queryRaw<TrafficData[]>`
+        SELECT 
+          EXTRACT(DOW FROM created_at) as day_of_week,
+          EXTRACT(HOUR FROM created_at) as hour_of_day,
+          CAST(COUNT(*) AS INTEGER) as email_count
+        FROM "public"."email_tracked"
+        WHERE user_id = ${userId}
+          AND created_at >= ${startOfPeriod} 
+          AND created_at <= ${endOfPeriod}
+        GROUP BY EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)
+        ORDER BY day_of_week, hour_of_day;
+      `;
+    } else {
+      trafficData = await db.$queryRaw<TrafficData[]>`
+        SELECT 
+          EXTRACT(DOW FROM created_at) as day_of_week,
+          EXTRACT(HOUR FROM created_at) as hour_of_day,
+          CAST(COUNT(*) AS INTEGER) as email_count
+        FROM "public"."email_tracked"
+        WHERE user_id = ${userId}
+        GROUP BY EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)
+        ORDER BY day_of_week, hour_of_day;
+      `;
+    }
 
     return ctx.json({trafficData },200);
   })
@@ -303,11 +296,18 @@ const app = new Hono()
       return ctx.json({ error: "Unauthorized" }, 401);
     }
 
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
+
     const now = new Date();
     // Go back 6 days to get 7 days total including today
-    const startOfPeriod = new Date(now);
+    let endOfPeriod = new Date(now);
+    let startOfPeriod = new Date(now);
     startOfPeriod.setDate(startOfPeriod.getDate() - 6);
     startOfPeriod.setHours(0, 0, 0, 0);
+
+    if (fromStr) startOfPeriod = new Date(fromStr);
+    if (toStr) endOfPeriod = new Date(toStr);
 
     // Grouping by Date and Read Status
     const rawData = await db.$queryRaw<{ date_str: string; is_read: boolean; email_count: number }[]>`
@@ -318,15 +318,17 @@ const app = new Hono()
       FROM "public"."email_tracked"
       WHERE user_id = ${userId}
         AND created_at >= ${startOfPeriod}
+        AND created_at <= ${endOfPeriod}
       GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD'), "isRead"
       ORDER BY date_str ASC;
     `;
 
     const result = [];
+    const daysDiff = Math.max(1, Math.ceil((endOfPeriod.getTime() - startOfPeriod.getTime()) / (1000 * 60 * 60 * 24)));
 
-    // Ensure we send back a dense array of exactly 7 days
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
+    // Ensure we send back a dense array of exact days
+    for (let i = daysDiff - 1; i >= 0; i--) {
+      const d = new Date(endOfPeriod);
       d.setDate(d.getDate() - i);
       
       const dateStr = d.toISOString().split("T")[0];

@@ -6,8 +6,8 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useMemo } from "react";
 
-const Clutter = () => {
-  const { data, isLoading, isError } = useGetClutter();
+const Clutter = ({ from, to }: { from?: string; to?: string }) => {
+  const { data, isLoading, isError } = useGetClutter(from, to);
  
 
   const maxUnread = useMemo(() => {

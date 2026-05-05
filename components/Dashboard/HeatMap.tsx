@@ -10,8 +10,8 @@ const HOURS = [
   '20:00', '22:00', '00:00', '02:00', '04:00', '06:00'
 ];
 
-const HeatMap = () => {
-  const { data, isLoading, isError } = useGetTrafficHeatmap();
+const HeatMap = ({ from, to }: { from?: string; to?: string }) => {
+  const { data, isLoading, isError } = useGetTrafficHeatmap(from, to);
 
   if (isLoading) {
     return <Skeleton className="w-full h-80 rounded-xl" />;
@@ -96,7 +96,7 @@ const HeatMap = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Inbox Traffic Heatmap</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Hourly arrival density for the last 7 days</p>
+          {/* <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Hourly arrival density for the </p> */}
         </div>
         <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-4 py-2 rounded-xl text-sm font-medium">
           <Lightbulb className="w-4 h-4" />

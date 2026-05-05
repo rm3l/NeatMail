@@ -3,11 +3,13 @@
 import { useGetUserMailsThisMonth } from "@/features/stats/use-get-mail-thisMonth";
 import { useUser } from "@clerk/nextjs";
 import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { DateRange } from "react-day-picker";
+import { subDays } from "date-fns";
+import { DatePickerWithRange } from "./DatePickerWithRange";
 import { LabelDistribution } from "./LabelDistribution";
 import Clutter from "./Dashboard/Clutter";
 import HeatMap from "./Dashboard/HeatMap";
-import MailsByDay from "./Dashboard/MailsByDay";
 import MostEmails from "./Dashboard/MostEmails";
 import ReadVsUnread from "./Dashboard/ReadVsUnread";
 
@@ -42,7 +44,15 @@ const subtitles = {
 
 const Dashboard = () => {
   const { user } = useUser();
-  const { data, isLoading, isError } = useGetUserMailsThisMonth();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
+  });
+
+  const from = date?.from?.toISOString();
+  const to = date?.to?.toISOString();
+
+  const { data, isLoading, isError } = useGetUserMailsThisMonth(from, to);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -100,6 +110,9 @@ const Dashboard = () => {
           </h1>
           <p className="text-gray-500">{greeting.subtitle}</p>
         </div>
+        <div className="flex items-center gap-4">
+          <DatePickerWithRange date={date} setDate={setDate} />
+        </div>
       </div>
 
       {/* Stats Section */}
@@ -108,7 +121,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 relative overflow-hidden flex flex-col justify-between">
           <div>
             <p className="text-xs font-bold text-gray-500 tracking-wider uppercase">
-              Emails labelled this week
+              Emails Received
             </p>
             <div className="w-full flex justify-between items-center">
               <p className="text-2xl font-semibold text-gray-900 mt-1">
@@ -123,7 +136,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between">
           <div>
             <p className="text-xs font-bold text-gray-500 tracking-wider uppercase">
-              Time saved this week
+              Time saved 
             </p>
             <p className="text-xl font-semibold text-gray-900 mt-1">
               {(() => {
@@ -154,20 +167,20 @@ const Dashboard = () => {
       {/* Charts & Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <LabelDistribution />
+          <LabelDistribution from={from} to={to} />
         </div>
         <div className="lg:col-span-1">
-          <Clutter />
+          <Clutter from={from} to={to} />
         </div>
         <div className="lg:col-span-1">
-          <MostEmails />
+          <MostEmails from={from} to={to} />
         </div>
         <div className="lg:col-span-3">
-          <ReadVsUnread />
+          <ReadVsUnread from={from} to={to} />
         </div>
       </div>
 
-      <HeatMap />
+      <HeatMap from={from} to={to} />
     </div>
   );
 };

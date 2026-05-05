@@ -2,8 +2,8 @@
 
 import { useGetUserTagsWeek } from "@/features/stats/use-get-user-tagsThisWeek";
 
-export function LabelDistribution() {
-  const { data: tags, isLoading } = useGetUserTagsWeek();
+export function LabelDistribution({ from, to }: { from?: string; to?: string }) {
+  const { data: tags, isLoading } = useGetUserTagsWeek(from, to);
 
   const distributionColors = [
     "#0c5c49",

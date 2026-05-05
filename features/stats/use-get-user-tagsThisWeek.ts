@@ -3,13 +3,18 @@ import {client} from "@/lib/hono"
 import { useUser } from "@clerk/nextjs";
 
 
-export const useGetUserTagsWeek = ()=>{
+export const useGetUserTagsWeek = (from?: string, to?: string)=>{
     const {user} = useUser()
     const query = useQuery({
         enabled : !!user,
-        queryKey: ["user-tags-week"],
+        queryKey: ["user-tags-week",{from,to}],
         queryFn: async ()=>{
-            const response = await client.api.stats.labelsThisWeek.$get();;
+            const response = await client.api.stats.labelsThisWeek.$get({
+                query: {
+                    ...(from ? { from } : {}),
+                    ...(to ? { to } : {})
+                }
+            });
 
             if(!response.ok) throw new Error("failed to get labels");
 

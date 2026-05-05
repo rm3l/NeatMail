@@ -3,13 +3,18 @@ import {client} from "@/lib/hono"
 import { useUser } from "@clerk/nextjs";
 
 
-export const useGetMostEmails = ()=>{
+export const useGetMostEmails = (from?: string, to?: string)=>{
     const {user} = useUser()
     const query = useQuery({
         enabled : !!user,
-        queryKey: ["user-most-emails"],
+        queryKey: ["user-most-emails",{from,to}],
         queryFn: async ()=>{
-            const response = await client.api.stats.mostEmails.$get();
+            const response = await client.api.stats.mostEmails.$get({
+                query: {
+                    ...(from ? { from } : {}),
+                    ...(to ? { to } : {})
+                }
+            });
 
             if(!response.ok) throw new Error("failed to get most emails stats");
 

@@ -6,8 +6,8 @@ import { ChevronDown } from "lucide-react";
 import { useMemo } from "react";
 import { useGetMostEmails } from "@/features/stats/use-get-mostEmails";
 
-const Clutter = () => {
-  const { data, isLoading, isError } = useGetMostEmails();
+const MostEmails = ({ from, to }: { from?: string; to?: string }) => {
+  const { data, isLoading, isError } = useGetMostEmails(from, to);
   
 
   const maxUnread = useMemo(() => {
@@ -98,4 +98,4 @@ const Clutter = () => {
   );
 };
 
-export default Clutter;
+export default MostEmails;

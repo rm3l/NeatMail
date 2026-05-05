@@ -3,13 +3,18 @@ import {client} from "@/lib/hono"
 import { useUser } from "@clerk/nextjs";
 
 
-export const useGetClutter = ()=>{
+export const useGetClutter = (from?: string, to?: string)=>{
     const {user} = useUser()
     const query = useQuery({
         enabled : !!user,
-        queryKey: ["user-clutter"],
+        queryKey: ["user-clutter",{from,to}],
         queryFn: async ()=>{
-            const response = await client.api.stats.clutter.$get();
+            const response = await client.api.stats.clutter.$get({
+                query: {
+                    ...(from ? { from } : {}),
+                    ...(to ? { to } : {})
+                }}
+            );
 
             if(!response.ok) throw new Error("failed to get cluuter stats");
 
