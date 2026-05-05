@@ -1,7 +1,7 @@
 <div align="center">
   <h1>NeatMail</h1>
-  <p><strong>Your Inbox Deserves Better</strong></p>
-  <p>AI-powered email automation that labels your Gmail and Outlook messages automatically and drafts intelligent responses.</p>
+  <h2><strong>Get to inbox zero faster</strong></h2>
+  <p>NeatMail organizes priority emails and drafts replies in Gmail and Outlook, so you can clear your inbox in less time.</p>
   
   <p>
     <a href="https://www.neatmail.app">Website</a> •
@@ -17,6 +17,8 @@
     <img src="https://img.shields.io/badge/Next.js-16.1-black" alt="Next.js" />
     <img src="https://img.shields.io/badge/React-19.2-blue" alt="React" />
   </p>
+
+  <img src=".github/workflows/assets/hero.png" alt="NeatMail Hero" width="800" />
 </div>
 
 ---
@@ -41,37 +43,71 @@
 
 NeatMail is an intelligent email management platform that automatically organizes your Gmail and Outlook inboxes in real-time. No complicated setup, no manual sorting—just clean, organized emails labeled exactly where you need them.
 
-### The Problem
-- Drowning in emails with no structure
-- Spending hours manually organizing messages
-- Missing important emails buried in clutter
-- Wasting time drafting repetitive responses
-
-### The Solution
-NeatMail watches your inbox 24/7 and:
-- ✨ **Automatically labels** incoming emails directly in Gmail and Outlook
-- 🎨 **Custom categories** - use presets or create your own
-- 🤖 **AI-powered drafts** - generates response drafts for pending emails in your tone
-- 🔄 **Real-time processing** - labels emails as they arrive, not in batches
-
----
 
 ## ✨ Features
 
-- **🏷️ Smart Email Labeling**: Automatically categorizes emails with a 95%+ confidence threshold.
-- **🤖 AI Draft Responses**: Contextual draft replies generated in your tone.
-- **📊 Analytics Dashboard**: Weekly email trends visualization and insights.
-- **🔐 Security & Privacy**: Minimal permission scope, no email content storage, row-level security.
+- **Gmail & Outlook Integration:** Connect in minutes via OAuth. Labels sync directly in real time.
+- **Smart Email Labeling:** AI automatically categorizes incoming emails into labels like **Action Needed** or **Pending Response**.
+- **Custom Labels:** Create personalized label systems to match your exact workflow.
+- **AI-Powered Draft Replies:** Auto-generate context-aware draft responses based on your conversation history and writing tone.
+- **One-Click Unsubscribe:** Instantly remove unwanted newsletters to keep your inbox clutter-free.
+- **Auto-Archive Rules:** Set rules to automatically archive emails based on labels, senders, or categories.
+- **Telegram Integration:** Receive alerts, set routing rules, and approve AI drafts directly from Telegram.
+
+
+
+---
+## Product Screenshots
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src=".github/workflows/assets/dashboard.png" alt="Dashboard" />
+      <br />
+      <b>Dashboard</b>
+    </td>
+    <td align="center">
+      <img src=".github/workflows/assets/labels.png" alt="Smart Labels" />
+      <br />
+      <b>Smart Labels</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src=".github/workflows/assets/draft.png" alt="AI Drafts" />
+      <br />
+      <b>AI Drafts</b>
+    </td>
+    <td align="center">
+      <img src=".github/workflows/assets/unsubscribe.png" alt="One-Click Unsubscribe" />
+      <br />
+      <b>One-Click Unsubscribe</b>
+    </td>
+  </tr>
+</table>
+
+---
+## 🎥 Product Video
+
+[![NeatMail Product Video](https://img.youtube.com/vi/_as6DVg6wvY/0.jpg)](https://www.youtube.com/watch?v=_as6DVg6wvY)
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 20+ and npm/yarn/pnpm/bun
+- Node.js 20+ and your preferred package manager (npm/yarn/pnpm/bun)
 - PostgreSQL database
 - Redis instance (e.g., Upstash)
-- Application credentials (Google Cloud, Microsoft Entra, Clerk, OpenAI)
+- Third-party Application Credentials:
+  - **Clerk** (Authentication)
+  - **OpenAI** or **Azure OpenAI** (AI classification & drafts)
+  - **Google Cloud Console** (Gmail API & Pub/Sub Webhooks)
+  - **Microsoft Entra** (Outlook API & Webhooks)
+  - **Inngest** (Background jobs and queues)
+  - **DodoPay** (Payments)
+  - **Resend** (Transactional emails)
+  - **Telegram** (Bot token for chat integrations)
 
 ### Installation
 
@@ -110,18 +146,31 @@ NeatMail watches your inbox 24/7 and:
 ## 🏗️ Architecture
 
 ```mermaid
-graph LR
-   A[Gmail / Outlook] -->|Push Notification| B[Google Pub/Sub / Graph]
-   B -->|Webhook| C[NeatMail API]
-   C -->|Fetch Email| A
-   C -->|Classify| D[OpenAI]
-   D -->|Label Name| C
-   C -->|Apply Label| A
-   C -->|Generate Draft| D
-   D -->|Draft Content| C
-   C -->|Create Draft| A
-   C -->|Store Metadata| E[(PostgreSQL)]
-   C -->|Deduplication| F[(Redis)]
+graph TD
+    subgraph Email Providers
+        Inbox[Gmail / Outlook]
+        PubSub[Google Pub/Sub / MS Graph]
+    end
+
+    Inbox -->|Push Notification| PubSub
+    PubSub -->|Webhook| API[NeatMail API]
+
+    subgraph Core Processing
+        API -->|Trigger Background Job| Inngest[Inngest Worker]
+        Inngest -->|Fetch Full Email| Inbox
+        Inngest -->|Analyze Email| AI[OpenAI / Azure]
+        AI -->|Labels & Drafts| Inngest
+        Inngest -->|Apply Labels & Drafts| Inbox
+    end
+
+    subgraph Data & State
+        Inngest -->|Store Metadata| DB[(PostgreSQL)]
+        Inngest -->|Cache & Deduplication| Redis[(Redis)]
+    end
+
+    subgraph Notifications
+        Inngest -->|Send Alerts| Telegram[Telegram Bot]
+    end
 ```
 
 ---
