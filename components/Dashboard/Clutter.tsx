@@ -89,7 +89,7 @@ const Clutter = ({ from, to }: { from?: string; to?: string }) => {
 
       <Link
       href="/unsubscribe"
-      className="w-full mt-auto flex items-center justify-center py-2 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-lg text-sm font-semibold text-gray-700 transition-colors"
+      className="w-full mt-4 md:mt-auto flex items-center justify-center py-2 bg-gray-50 hover:bg-gray-100 border border-gray-100 rounded-lg text-sm font-semibold text-gray-700 transition-colors"
    >
       <ChevronDown className="w-4 h-4 mr-2" />
       Show more
