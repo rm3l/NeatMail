@@ -5,10 +5,10 @@
   
   <p>
     <a href="https://www.neatmail.app">Website</a> •
-    <a href="#features">Features</a> •
-    <a href="#getting-started">Getting Started</a> •
-    <a href="#deployment">Deployment</a> •
-    <a href="#tech-stack">Tech Stack</a>
+    <a href="#-features">Features</a> •
+    <a href="#-getting-started">Getting Started</a> •
+    <a href="#-deployment">Deployment</a> •
+    <a href="#-tech-stack">Tech Stack</a>
   </p>
 
   <p>
@@ -89,7 +89,9 @@ NeatMail is an intelligent email management platform that automatically organize
 ---
 ## 🎥 Product Video
 
-[![NeatMail Product Video](https://img.youtube.com/vi/_as6DVg6wvY/0.jpg)](https://www.youtube.com/watch?v=_as6DVg6wvY)
+<a href="https://www.youtube.com/watch?v=_as6DVg6wvY" target="_blank">
+  <img src="https://img.youtube.com/vi/_as6DVg6wvY/maxresdefault.jpg" alt="NeatMail Product Video" width="100%" />
+</a>
 
 ---
 
