@@ -207,7 +207,7 @@ const app = new Hono()
           tag_id: { not: null },
           created_at: {
             gte: startOfPeriod,
-            lt: endOfPeriod,
+            lte: endOfPeriod,
           },
         },
       });

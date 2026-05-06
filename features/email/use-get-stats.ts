@@ -3,13 +3,18 @@ import {client} from "@/lib/hono"
 import { useUser } from "@clerk/nextjs";
 
 
-export const useGetUserEmailStats = ()=>{
+export const useGetUserEmailStats = (from?: string, to?: string)=>{
     const {user} = useUser()
     const query = useQuery({
         enabled : !!user,
-        queryKey: ["user-email-stats"],
+        queryKey: ["user-email-stats",{from,to}],
         queryFn: async ()=>{
-            const response = await client.api.email.stats.$get();;
+            const response = await client.api.email.stats.$get({
+                query: {
+                    ...(from ? { from } : {}),
+                    ...(to ? { to } : {})
+                }}
+            );
 
             if(!response.ok) throw new Error("failed to get stats for emails");
 

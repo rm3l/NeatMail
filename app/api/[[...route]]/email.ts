@@ -92,19 +92,26 @@ const app = new Hono()
       return ctx.json({ error: "Unauthorized" }, 401);
     }
 
+    const fromStr = ctx.req.query("from");
+    const toStr = ctx.req.query("to");
+    const dateFilter: any = {};
+     if (fromStr) dateFilter.gte = new Date(fromStr);
+      if (toStr) dateFilter.lte = new Date(toStr);
+
     const [total, readData, archiveRules] = await Promise.all([
       db.email_tracked.groupBy({
         by: ["domain"],
-        where: { user_id: userId, domain: { not: null } },
+        where: { user_id: userId, domain: { not: null }, ...(Object.keys(dateFilter).length > 0 && { created_at: dateFilter }) },
         _count: { message_id: true },
+        
       }),
       db.email_tracked.groupBy({
         by: ["domain"],
-        where: { user_id: userId, is_read: true, domain: { not: null } },
+        where: { user_id: userId, is_read: true, domain: { not: null }, ...(Object.keys(dateFilter).length > 0 && { created_at: dateFilter }) },
         _count: { message_id: true },
       }),
       db.archiveRule.findMany({
-        where: { user_id: userId },
+        where: { user_id: userId},
         select: { domain: true, isActive: true, archiveAfterDays: true },
       }),
     ]);

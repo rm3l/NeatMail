@@ -33,6 +33,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGetUserEmailStats } from "@/features/email/use-get-stats";
 import { useUnsubscribeDomain } from "@/features/email/use-post-unsubscribe";
 import { useArchiveMutation } from "@/features/email/use-post-archive";
+import { DateRange } from "react-day-picker";
+import { subDays } from "date-fns";
+import { DatePickerWithRange } from "./DatePickerWithRange";
 
 type EmailStatsRow = {
   domain: string | null;
@@ -145,7 +148,9 @@ const ActionsCell = ({
           });
         }}
       >
-        {isArchived ? `Un-archive (${archiveAfterDays || globalDuration}d)` : "Archive"}
+        {isArchived
+          ? `Un-archive (${archiveAfterDays || globalDuration}d)`
+          : "Archive"}
       </Button>
       <Button
         variant="outline"
@@ -172,9 +177,25 @@ const ActionsCell = ({
 };
 
 const EmailStats = () => {
-  const { data, isLoading, isError } = useGetUserEmailStats();
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  const [debouncedDate, setDebouncedDate] = React.useState<
+    DateRange | undefined
+  >(date);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedDate(date);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [date]);
+
+  const from = debouncedDate?.from?.toISOString();
+  const to = debouncedDate?.to?.toISOString();
+  const { data, isLoading, isError } = useGetUserEmailStats(from, to);
   const unsubscribeMutation = useUnsubscribeDomain();
-  const archiveAfterMutation = useArchiveMutation();
   const [archiveDuration, setArchiveDuration] = React.useState<30 | 60>(30);
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "total", desc: true },
@@ -330,14 +351,7 @@ const EmailStats = () => {
     );
   }
 
-  if (rows.length === 0 && !isLoading) {
-    return (
-      <div className="text-muted-foreground rounded-lg border p-6 text-sm">
-        No email statistics available yet.
-      </div>
-    );
-  }
-
+ 
   return (
     <div className="space-y-4">
       <div className="flex-col md:flex md:flex-row items-center justify-between px-2 space-y-2">
@@ -349,13 +363,18 @@ const EmailStats = () => {
           }
           className="max-w-sm"
         />
-        <div className="flex items-center gap-2 justify-between">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 justify-between md:items-center">
+          <DatePickerWithRange date={date} setDate={setDate} />
           <span className="text-sm font-medium text-muted-foreground text-nowrap ">
             Archive after:
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-30 justify-between" >
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-30 justify-between"
+              >
                 {archiveDuration} Days
                 <ChevronRight className="ml-2 h-4 w-4 opacity-50 rotate-90" />
               </Button>
@@ -371,7 +390,9 @@ const EmailStats = () => {
           </DropdownMenu>
         </div>
       </div>
-      <div className="">
+     
+
+      <div>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -412,7 +433,7 @@ const EmailStats = () => {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No matching domains.
+                 No domain analytics are available for the selected time period.
                 </TableCell>
               </TableRow>
             )}
