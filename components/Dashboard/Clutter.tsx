@@ -51,7 +51,7 @@ const Clutter = ({ from, to }: { from?: string; to?: string }) => {
         <span>Unread</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 mb-4">
         {data?.clutterData?.map((item) => {
           const percentage = Math.max(10, ((item.unreadCount || 0) / maxUnread) * 100);
           
