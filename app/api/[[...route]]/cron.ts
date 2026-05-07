@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { db } from "@/lib/prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import { activateWatch } from "@/lib/gmail";
-import { updateHistoryId, updateOutlookId } from "@/lib/supabase";
+import { updateHistoryId, updateOutlookId, getUserSubscribed } from "@/lib/supabase";
 import { createOutlookSubscription } from "@/lib/outlook";
 import {trashMessages as archiveGmailMessages } from "@/lib/gmail";
 import { archiveMessages as archiveOutlookMessages } from "@/lib/outlook";
@@ -638,6 +638,12 @@ const app = new Hono()
       // Process each rule
       for (const rule of activeRules) {
         try {
+          // Skip users who are not subscribed
+          const subStatus = await getUserSubscribed(rule.user_id);
+          if (!subStatus.subscribed) {
+            continue;
+          }
+
           // Calculate the threshold date
           const thresholdDate = new Date(now);
           thresholdDate.setDate(thresholdDate.getDate() - rule.archiveAfterDays);
