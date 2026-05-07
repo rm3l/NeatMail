@@ -396,6 +396,54 @@ export async function unsubscribeFromEmailOutlook(userId: string, messageId: str
  * @param messageIds - Array of message IDs to archive
  * @returns Object with success status, count of archived messages, and failed count
  */
+export async function getPreviousOutlookMails(userId: string) {
+  const client = await getGraphClient(userId);
+
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const filterDate = fourteenDaysAgo.toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  const messages: { messageId: string; fullemail: string; is_Read: boolean; created_at: string }[] = [];
+
+  let nextLink: string | undefined;
+
+  do {
+    try {
+      const response = nextLink
+        ? await client.api(nextLink).get()
+        : await client
+            .api("/me/messages")
+            .filter(`receivedDateTime ge ${filterDate}`)
+            .select("id,from,receivedDateTime,isRead")
+            .top(100)
+            .get();
+
+      const messageList = (response as any).value ?? [];
+      nextLink = (response as any)["@odata.nextLink"];
+
+      for (const msg of messageList) {
+        const fullemail = msg.from?.emailAddress
+          ? `${msg.from.emailAddress.name} <${msg.from.emailAddress.address}>`
+          : "";
+
+        messages.push({
+          messageId: msg.id,
+          fullemail: fullemail.trim(),
+          is_Read: msg.isRead ?? false,
+          created_at: msg.receivedDateTime
+            ? new Date(msg.receivedDateTime).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+    } catch (error: any) {
+      console.error("Outlook getPreviousOutlookMails page error:", error);
+      break;
+    }
+  } while (nextLink);
+
+  return messages;
+}
+
 export async function archiveMessages(userId: string, messageIds: string[]) {
   if (!messageIds || messageIds.length === 0) {
     return { success: true, archived: 0, message: "No messages to archive" };

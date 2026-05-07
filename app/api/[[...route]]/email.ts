@@ -6,6 +6,7 @@ import {
 } from "@/lib/gmail";
 import {
   getLabelledMailsOutlook,
+  getPreviousOutlookMails,
   unsubscribeFromEmailOutlook,
 } from "@/lib/outlook";
 import { db } from "@/lib/prisma";
@@ -282,8 +283,52 @@ const app = new Hono()
     });
 
     if (!is_gmail?.is_gmail) {
+      const is_outlook = await db.user_tokens.findUnique({
+        where: { clerk_user_id: userId },
+        select: { outlook_id: true },
+      });
+
+      if (is_outlook?.outlook_id) {
+        try {
+          const mails = await getPreviousOutlookMails(userId);
+
+          if (!mails || mails.length === 0) {
+            return ctx.json({ message: "No mails found" }, 200);
+          }
+
+          const insertData = await Promise.all(
+            mails.map(async (mail) => {
+              const domain = await encryptDomain(mail.fullemail);
+              return {
+                user_id: userId,
+                message_id: mail.messageId,
+                domain,
+                is_read: mail.is_Read,
+                created_at: new Date(mail.created_at),
+              };
+            }),
+          );
+
+          await db.email_tracked.createMany({
+            data: insertData,
+            skipDuplicates: true,
+          });
+
+          return ctx.json(
+            {
+              message: "History synced successfully",
+              count: insertData.length,
+            },
+            200,
+          );
+        } catch (error) {
+          console.error("Error syncing history (Outlook):", error);
+          return ctx.json({ error: "Failed to sync history" }, 500);
+        }
+      }
+
       return ctx.json(
-        { error: "Only Gmail is supported for this operation" },
+        { error: "Failed to sync history for outlook" },
         400,
       );
     }
@@ -324,7 +369,7 @@ const app = new Hono()
     } catch (error) {
       console.error("Error syncing history:", error);
 
-      return ctx.json({ error: "Failed to sync history" }, 500);
+      return ctx.json({ error: "Failed to sync history for gmail" }, 500);
     }
   });
 
