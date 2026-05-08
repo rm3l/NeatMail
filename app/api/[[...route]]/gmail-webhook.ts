@@ -63,7 +63,7 @@ const app = new Hono().post("/", async (ctx) => {
 
     const ticket = await authClient.verifyIdToken({
       idToken: token,
-      audience: "https://dashboard.neatmail.app/api/gmail-webhook",
+      audience: `${process.env.NEXT_PUBLIC_API_URL}/api/gmail-webhook`,
     });
 
     const payload = ticket.getPayload();
