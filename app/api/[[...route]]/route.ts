@@ -64,6 +64,8 @@ app.use('*', async (c, next) => {
     }
   } catch (error) {
     console.error('Rate limiting error:', error);
+    return c.json({ error: 'Service temporarily unavailable' }, 503)
+    
   }
 
   await next();

@@ -2,9 +2,9 @@ import { db } from "@/lib/prisma";
 import { auth} from "@clerk/nextjs/server";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import z from "zod/v3";
 import { colors, outlook_colors } from "@/lib/colors";
 import { getGmailClient } from "@/lib/gmail";
+import z from "zod";
 
 
 

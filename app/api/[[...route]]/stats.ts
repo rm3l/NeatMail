@@ -3,12 +3,18 @@ import { Hono } from "hono";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { decryptDomain } from "@/lib/encode";
+import z from "zod";
 
 interface TrafficData {
   day_of_week: number;
   hour_of_day: number;
   email_count: number;
 }
+
+const dateQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/).optional(),
+});
 
 const app = new Hono()
 
@@ -21,6 +27,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
     const dateFilter: any = {};
     if (fromStr) dateFilter.gte = new Date(fromStr);
     if (toStr) dateFilter.lte = new Date(toStr);
@@ -61,6 +71,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
     const dateFilter: any = {};
     if (fromStr) dateFilter.gte = new Date(fromStr);
     if (toStr) dateFilter.lte = new Date(toStr);
@@ -101,6 +115,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
 
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -190,6 +208,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
 
     const now = new Date();
 
@@ -245,6 +267,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
 
     let trafficData: TrafficData[] = [];
 
@@ -290,6 +316,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
 
     const now = new Date();
     // Go back 6 days to get 7 days total including today

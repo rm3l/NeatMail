@@ -15,6 +15,11 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
 
+const dateQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/).optional(),
+});
+
 const app = new Hono()
 
   //this route is for landing page
@@ -99,6 +104,10 @@ const app = new Hono()
 
     const fromStr = ctx.req.query("from");
     const toStr = ctx.req.query("to");
+    const dateQuery = dateQuerySchema.safeParse({ from: fromStr, to: toStr });
+    if (!dateQuery.success) {
+      return ctx.json({ error: "Invalid date format. Use YYYY-MM-DD." }, 400);
+    }
     const dateFilter: any = {};
     if (fromStr) dateFilter.gte = new Date(fromStr);
     if (toStr) dateFilter.lte = new Date(toStr);
