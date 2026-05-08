@@ -138,7 +138,7 @@ export function EmailCategorizationModal({ open, onOpenChange }: EmailCategoriza
 							<div className="flex items-center gap-2">
 								<Loader2 className="h-5 w-5 animate-spin" />
 								{syncHistoryMutation.isPending 
-									? "Syncing history with Gmail, please hold on..." 
+									? "Syncing history with your inbox, please hold on..." 
 									: "Updating preferences..."}
 							</div>
 						) : (
