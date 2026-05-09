@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { clerkClient } from "@clerk/nextjs/server";
 import { extractUnsubscribeLinkFromBodyGmail } from "./unsubscribe";
 import { applyCorrectionsToText } from "./openai";
-import { redis } from "./redis";
+
 
 interface Attachment {
   filename: string;
@@ -26,45 +26,19 @@ export function stripQuotedReply(texts: string[]): string[] {
     return text.trim();
   });
 }
-// In-process cache: avoids hitting Redis on every call within the same request
-const _tokenCache = new Map<string, { token: string; expiresAt: number }>();
-
 export async function getGmailClient(userId: string) {
   try {
-    // 1. Check in-process cache first (fastest — no I/O)
-    const now = Date.now();
-    const cached = _tokenCache.get(userId);
-    let accessToken: string | undefined;
+    const client = await clerkClient();
+    const externalAccounts = await client.users.getUserOauthAccessToken(
+      userId,
+      "google",
+    );
+    const accessToken = externalAccounts.data[0]?.token;
 
-    if (cached && cached.expiresAt > now) {
-      accessToken = cached.token;
-    } else {
-      // 2. Try Redis cache (avoids Clerk API call across requests)
-      const redisKey = `gmail:token:${userId}`;
-      const redisToken = await redis.get(redisKey);
-      if (typeof redisToken === "string" && redisToken.length > 0) {
-        accessToken = redisToken;
-        // Warm up in-process cache for the duration of this request
-        _tokenCache.set(userId, { token: accessToken, expiresAt: now + 60_000 });
-      } else {
-        // 3. Fetch from Clerk (cold path — only happens once per 45 min)
-        const client = await clerkClient();
-        const externalAccounts = await client.users.getUserOauthAccessToken(
-          userId,
-          "google",
-        );
-        accessToken = externalAccounts.data[0]?.token;
-
-        if (!accessToken) {
-          throw new Error(
-            "No Google access token found. User needs to reconnect their Google account.",
-          );
-        }
-
-        // Cache in Redis for 45 minutes, in-process for 1 minute
-        await redis.setex(redisKey, 2700, accessToken);
-        _tokenCache.set(userId, { token: accessToken, expiresAt: now + 60_000 });
-      }
+    if (!accessToken) {
+      throw new Error(
+        "No Google access token found. User needs to reconnect their Google account.",
+      );
     }
 
     const oauth2Client = new google.auth.OAuth2();
@@ -80,11 +54,7 @@ export async function getGmailClient(userId: string) {
       clerkTraceId: error.clerkTraceId,
     });
 
-    // If it's a Clerk API error related to OAuth tokens
     if (error.code === "api_response_error" && error.status === 400) {
-      // Evict the stale token from caches
-      _tokenCache.delete(userId);
-      await redis.del(`gmail:token:${userId}`);
       throw new Error(
         "Google OAuth token has expired or is invalid. Please reconnect your Google account in your user profile.",
       );
