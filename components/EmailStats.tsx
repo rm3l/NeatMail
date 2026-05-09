@@ -28,7 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetUserEmailStats } from "@/features/email/use-get-stats";
 import { useUnsubscribeDomain } from "@/features/email/use-post-unsubscribe";
@@ -37,6 +36,7 @@ import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { DatePickerWithRange } from "./DatePickerWithRange";
 import { EmptyState } from "./EmptyState";
+import { ErrorState } from "./ErrorState";
 
 type EmailStatsRow = {
   domain: string | null;
@@ -343,12 +343,12 @@ const EmailStats = () => {
 
   if (isError) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>Unable to load email stats</AlertTitle>
-        <AlertDescription>
-          Please refresh the page and try again.
-        </AlertDescription>
-      </Alert>
+      <ErrorState
+        title="Unable to load email stats"
+        description="Please refresh the page and try again."
+        width={300}
+        height={300}
+      />
     );
   }
 

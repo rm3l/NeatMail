@@ -22,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetFilteredEmails } from "@/features/email/use-get-filtered";
 import { useDeleteMessageMutation } from "@/features/email/use-post-delete-message";
@@ -37,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "./EmptyState";
+import { ErrorState } from "./ErrorState";
 
 type EmailRow = {
   id: string;
@@ -306,12 +306,12 @@ const StorageAnalysis = () => {
 
   if (isError) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>Unable to load emails</AlertTitle>
-        <AlertDescription>
-          Please refresh the page and try again.
-        </AlertDescription>
-      </Alert>
+      <ErrorState
+        title="Unable to load emails"
+        description="Please refresh the page and try again."
+        width={300}
+        height={300}
+      />
     );
   }
 
