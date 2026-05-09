@@ -10,6 +10,8 @@ import { ConditionalSidebar } from "@/components/ConditionalSidebar";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { AccessDeniedAlert } from "@/components/AccessDeniedAlert";
+import PageTransition from "@/components/PageTransition";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,7 +99,7 @@ export default async function RootLayout({
                 ) : (
                   <>
                     <Navbar />
-                    {children}
+                    <PageTransition>{children}</PageTransition>
                   </>
                 )}
               </main>

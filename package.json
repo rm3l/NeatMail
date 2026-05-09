@@ -37,6 +37,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dodopayments": "^2.14.1",
+    "framer-motion": "^12.38.0",
     "google-auth-library": "^10.5.0",
     "googleapis": "^169.0.0",
     "hono": "^4.12.18",
