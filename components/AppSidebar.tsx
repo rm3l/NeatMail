@@ -1,5 +1,6 @@
 "use client"
 import { Home, Receipt, Tag, PenLine, Plug, MailX, Inbox, MessageSquareDashed, AlertCircle } from "lucide-react"
+import { motion, LayoutGroup } from "framer-motion"
 
 import {
   Sidebar,
@@ -47,9 +48,16 @@ export function AppSidebar() {
           <SidebarMenuButton
             asChild
             isActive={isActive}
-            className="group/menu-button relative before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2.5px] before:rounded-r-full before:bg-indigo-500 data-[active=true]:before:block before:hidden"
+            className="group/menu-button relative"
           >
             <Link href={item.url} onClick={handleLinkClick}>
+              {isActive && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute left-0 top-1.5 bottom-1.5 w-[2.5px] rounded-r-full bg-indigo-500"
+                  transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                />
+              )}
               <Icon size={16} className="shrink-0 opacity-70 group-data-[active=true]/menu-button:opacity-100 group-hover:opacity-100" aria-hidden="true" />
               <span>{item.title}</span>
             </Link>
@@ -65,7 +73,9 @@ export function AppSidebar() {
           <SidebarGroupLabel />
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderItems(items)}
+              <LayoutGroup>
+                {renderItems(items)}
+              </LayoutGroup>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -76,7 +86,9 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderItems(cleanupItems)}
+              <LayoutGroup>
+                {renderItems(cleanupItems)}
+              </LayoutGroup>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
