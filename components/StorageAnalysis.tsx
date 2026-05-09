@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EmptyState } from "./EmptyState";
 
 type EmailRow = {
   id: string;
@@ -399,9 +400,14 @@ const StorageAnalysis = () => {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="text-center"
                 >
-                  No emails match the current filters.
+                  <EmptyState
+                    title="No emails found"
+                    description="Try adjusting your filters or date range to find what you're looking for."
+                    width={240}
+                    height={240}
+                  />
                 </TableCell>
               </TableRow>
             )}

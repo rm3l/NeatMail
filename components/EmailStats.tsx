@@ -36,6 +36,7 @@ import { useArchiveMutation } from "@/features/email/use-post-archive";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { DatePickerWithRange } from "./DatePickerWithRange";
+import { EmptyState } from "./EmptyState";
 
 type EmailStatsRow = {
   domain: string | null;
@@ -431,9 +432,14 @@ const EmailStats = () => {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="text-center"
                 >
-                  No domain analytics are available for the selected time period.
+                  <EmptyState
+                    title="No email stats"
+                    description="No domain analytics are available for the selected time period."
+                    width={240}
+                    height={240}
+                  />
                 </TableCell>
               </TableRow>
             )}
