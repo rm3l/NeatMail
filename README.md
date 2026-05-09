@@ -83,6 +83,14 @@ NeatMail is an intelligent email management platform that automatically organize
       <br />
       <b>One-Click Unsubscribe</b>
     </td>
+    
+  </tr>
+  <tr>
+  <td align="center">
+      <img src=".github/workflows/assets/cleanup.png" alt="One-Click Cleanup" />
+      <br />
+      <b>One-Click Cleanup</b>
+    </td>
   </tr>
 </table>
 
