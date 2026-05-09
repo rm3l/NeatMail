@@ -1,6 +1,5 @@
 "use client"
-import { Home, MessageSquareDashed, Receipt, AlertCircle, Tag,Shredder, Workflow } from "lucide-react"
-
+import { Home, Receipt, Tag, PenLine, Plug, MailX, Inbox, MessageSquareDashed, AlertCircle } from "lucide-react"
 
 import {
   Sidebar,
@@ -12,84 +11,72 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-// Menu items.
 const items = [
-  {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "Unsubscribe",
-    url: "/unsubscribe",
-    icon: Shredder,
-  },
-  {
-    title: 'Billing',
-    url: "/billing",
-    icon: Receipt
-  },
-  {
-    title: "Labels",
-    url: "/settings/labels",
-    icon: Tag,
-  },
-   {
-    title: 'Draft Preference',
-    url: "/settings/draft-preference",
-    icon: MessageSquareDashed
-  },
-
-  {
-    title: 'Integrations',
-    url: "/integrations",
-    icon: Workflow
-
-  }
-  // {
-  //   title: "Privacy",
-  //   url: "/settings/privacy",
-  //   icon: ShieldCheck,
-  // }
- 
+  { title: "Home", url: "/", icon: Home },
+  { title: "Billing", url: "/billing", icon: Receipt },
+  { title: "Labels", url: "/settings/labels", icon: Tag },
+  { title: "Draft preference", url: "/settings/draft-preference", icon: PenLine },
+  { title: "Integrations", url: "/integrations", icon: Plug },
 ]
 
+const cleanupItems = [
+  { title: "Unsubscribe", url: "/unsubscribe", icon: MailX },
+  { title: "Large emails", url: "/storage", icon: Inbox },
+]
 
 export function AppSidebar() {
   const { isMobile, setOpenMobile } = useSidebar()
   const pathname = usePathname()
 
   const handleLinkClick = () => {
-    if (isMobile) {
-      setOpenMobile(false)
-    }
+    if (isMobile) setOpenMobile(false)
   }
 
+  const renderItems = (items: typeof cleanupItems) =>
+    items.map((item) => {
+      const isActive = pathname === item.url || (item.url !== "/" && pathname.startsWith(item.url))
+      const Icon = item.icon
+      return (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            className="group/menu-button relative before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2.5px] before:rounded-r-full before:bg-indigo-500 data-[active=true]:before:block before:hidden"
+          >
+            <Link href={item.url} onClick={handleLinkClick}>
+              <Icon size={16} className="shrink-0 opacity-70 group-data-[active=true]/menu-button:opacity-100 group-hover:opacity-100" aria-hidden="true" />
+              <span>{item.title}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )
+    })
+
   return (
-    <Sidebar >
-      <SidebarContent className="lg:mt-16">
+    <Sidebar>
+      <SidebarContent className="lg:mt-16 overflow-x-hidden">
         <SidebarGroup>
-          <SidebarGroupLabel></SidebarGroupLabel>
+          <SidebarGroupLabel />
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
-                const isActive = pathname === item.url || (item.url !== "/" && pathname.startsWith(item.url))
-                return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={`h-12 ${isActive ? "bg-neutral-100 dark:bg-neutral-800 font-semibold" : ""}`}>
-                    <Link href={item.url} onClick={handleLinkClick}>
-                      <item.icon className="h-5! w-5!" />
-                      <span className="text-base ">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )})}
-
+              {renderItems(items)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10.5px] font-medium tracking-widest uppercase text-sidebar-foreground/50 pb-1">
+            Cleanup
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {renderItems(cleanupItems)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -97,23 +84,23 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="h-12">
+            <SidebarMenuButton asChild>
               <Link
                 href="https://forms.baytix.net/forms/neatmail-feedback-form-8fc4565d"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleLinkClick}
               >
-                <MessageSquareDashed className="h-4! w-4!" />
-                <span className="text-sm">Feedback</span>
+                <MessageSquareDashed size={16} className="shrink-0 opacity-70 group-hover:opacity-100" aria-hidden="true" />
+                <span>Feedback</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="h-12 text-red-600 hover:text-red-700">
+            <SidebarMenuButton asChild className="text-red-600 hover:text-red-700">
               <Link href="/danger" onClick={handleLinkClick}>
-                <AlertCircle className="h-4! w-4!" />
-                <span className="text-sm">Danger Zone</span>
+                <AlertCircle size={16} className="shrink-0 opacity-70 group-hover:opacity-100" aria-hidden="true" />
+                <span>Danger Zone</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
