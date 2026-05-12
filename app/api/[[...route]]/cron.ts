@@ -563,7 +563,7 @@ const app = new Hono()
             });
 
             const { data: resData, error: resError } = await resend.emails.send({
-              from: "Lakshay <lakshay@mails.neatmail.app>",
+              from: "Lakshay <lakshay@send.neatmail.app>",
               to: mail,
               subject: "Re: NeatMail access",
               react: BetaAccessEmail({
