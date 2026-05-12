@@ -565,7 +565,7 @@ const app = new Hono()
             const { data: resData, error: resError } = await resend.emails.send({
               from: "Lakshay <lakshay@mails.neatmail.app>",
               to: mail,
-              subject: "Your NeatMail beta access is live!",
+              subject: "Re: NeatMail access",
               react: BetaAccessEmail({
                 activationLink: `https://dashboard.neatmail.app/sign-in?accessToken=${data.token}`,
               }),

@@ -29,6 +29,11 @@ export default function BetaAccessEmail({
           — takes about 2 minutes, no credit card.
         </Text>
 
+        <Text style={smallText}>
+          Google may show an "unverified app" screen — just click Advanced
+          &rarr; Go to NeatMail. That's normal for early-stage apps.
+        </Text>
+
         <Text style={paragraph}>
           Let me know if anything comes up.
         </Text>
@@ -53,6 +58,13 @@ const paragraph = {
   fontSize: "15px",
   lineHeight: "1.6",
   color: "#222222",
+  margin: "0 0 14px",
+};
+
+const smallText = {
+  fontSize: "13px",
+  lineHeight: "1.5",
+  color: "#666666",
   margin: "0 0 14px",
 };
 
