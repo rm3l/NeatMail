@@ -64,6 +64,8 @@ export class SlackProvider implements ContextProvider {
 
     const userFullName = [userClerk.firstName, userClerk.lastName].filter(Boolean).join(" ")
     const query = this.buildQuery(email, entities, userFullName)
+    // TODO: Remove console logs in production
+    console.log("[SlackProvider] Built query:", query)
 
     try {
       const searchUrl = new URL(`${SLACK_API}/search.messages`)
@@ -76,6 +78,8 @@ export class SlackProvider implements ContextProvider {
       })
 
       const data: SlackSearchResponse = await res.json()
+      // TODO: Remove console logs in production
+      console.log("[SlackProvider] Search response:", { ok: data.ok, total: data.messages?.total, matches: data.messages?.matches?.length })
       if (!data.ok || !data.messages?.matches?.length) return null
 
       const summaryLines = data.messages.matches.slice(0, 5).map((m) => {
@@ -90,6 +94,9 @@ export class SlackProvider implements ContextProvider {
       })
 
       const summary = `Relevant Slack messages (${data.messages.total} total matches):\n${summaryLines.join("\n")}`
+
+      // TODO: Remove console logs in production
+      console.log(summary)
 
       return {
         providerId: this.id,
