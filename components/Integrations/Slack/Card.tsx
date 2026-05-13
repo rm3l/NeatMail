@@ -24,10 +24,7 @@ export const SlackCard = () => {
         strategy: "oauth_slack",
         redirectUrl: window.location.href,
         additionalScopes: [
-          "search:read.public",
-          "search:read.private",
-          "search:read.im",
-          "search:read.mpim",
+          "search:read",
           "channels:history",
           "channels:read",
           "groups:history",
