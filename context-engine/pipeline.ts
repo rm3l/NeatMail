@@ -3,8 +3,10 @@
 import { ContextAssembler }        from "./assembler"
 import { GoogleCalendarProvider } from "./providers/google-calender"
 import { OutlookCalendarProvider } from "./providers/outlook-calender"
+import { SlackProvider }          from "./providers/slack"
 
-import { EmailEntities, EmailIntent, IncomingEmail }            from "./types"
+import { EmailEntities, EmailIntent, IncomingEmail } from "./types"
+import { getUserConnectedProviders } from "@/lib/clerk"
 
 // ── Register all providers here — this is the ONLY file
 //    you touch when adding a new integration ──────────────
@@ -19,9 +21,6 @@ const openai = new OpenAI({
   baseURL: endpoint,
   apiKey,
 });
-// assembler.register(new SlackProvider())       ← you'll add this next
-// assembler.register(new JiraProvider())        ← then this
-// assembler.register(new NotionProvider())      ← and so on forever
 
 // ── Main function your webhook calls ───────────────────────
 
@@ -48,7 +47,10 @@ export async function buildContextAndDraft(
     assembler.register(new OutlookCalendarProvider())
   }
 
-
+  const connectedProviders = await getUserConnectedProviders(email.userId)
+  if (connectedProviders.includes("slack")) {
+    assembler.register(new SlackProvider())
+  }
 
   const entities: EmailEntities={
     senderEmail:email.senderEmail,
