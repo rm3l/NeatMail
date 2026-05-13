@@ -1,4 +1,6 @@
 import { clerkClient } from "@clerk/nextjs/server"
+import { db } from "@/lib/prisma"
+import { encrypt, decrypt } from "@/lib/encode"
 import {
   ContextProvider,
   ContextCard,
@@ -31,6 +33,8 @@ export class SlackProvider implements ContextProvider {
   id = "slack"
   name = "Slack"
 
+  constructor(private token: string) {}
+
   relevantIntents: EmailIntent[] = [
     "question",
     "task_assignment",
@@ -46,16 +50,12 @@ export class SlackProvider implements ContextProvider {
     entities: EmailEntities,
     userId: string
   ): Promise<ContextCard | null> {
-    let token: string
-    let userClerk: { firstName?: string | null; lastName?: string | null; primaryEmailAddress?: { emailAddress?: string } | null }
+    const token = await this.getValidToken(userId)
+    if (!token) return null
+
+    let userClerk: { firstName?: string | null; lastName?: string | null }
     try {
       const client = await clerkClient()
-      const tokenResponse = await client.users.getUserOauthAccessToken(
-        userId,
-        "slack"
-      )
-      token = tokenResponse.data[0]?.token
-      if (!token) return null
       const u = await client.users.getUser(userId)
       userClerk = u
     } catch {
@@ -76,10 +76,6 @@ export class SlackProvider implements ContextProvider {
       })
 
       const data: SlackSearchResponse = await res.json()
-
-      // TODO: remove after debugging
-      console.log(`[SlackProvider] query="${query}" total=${data.messages?.total ?? 0} matches=${data.messages?.matches?.length ?? 0}`)
-
       if (!data.ok || !data.messages?.matches?.length) return null
 
       const summaryLines = data.messages.matches.slice(0, 5).map((m) => {
@@ -94,8 +90,6 @@ export class SlackProvider implements ContextProvider {
       })
 
       const summary = `Relevant Slack messages (${data.messages.total} total matches):\n${summaryLines.join("\n")}`
-      // TODO: remove after debugging
-      console.log(`[SlackProvider] context:\n${summary}`)
 
       return {
         providerId: this.id,
@@ -106,6 +100,62 @@ export class SlackProvider implements ContextProvider {
       }
     } catch (err) {
       console.error("[SlackProvider] search failed:", err)
+      return null
+    }
+  }
+
+  private async getValidToken(userId: string): Promise<string | null> {
+    const integration = await db.slack_integration.findUnique({
+      where: { user_id: userId },
+      select: { access_token: true, refresh_token: true, token_expires_at: true },
+    })
+    if (!integration) return this.token
+
+    if (
+      !integration.token_expires_at ||
+      integration.token_expires_at.getTime() > Date.now() + 300000
+    ) {
+      return decrypt(integration.access_token)
+    }
+
+    if (!integration.refresh_token) return null
+
+    const decryptedRefresh = await decrypt(integration.refresh_token)
+
+    const body = new URLSearchParams({
+      client_id: process.env.SLACK_CLIENT_ID!,
+      client_secret: process.env.SLACK_CLIENT_SECRET!,
+      grant_type: "refresh_token",
+      refresh_token: decryptedRefresh,
+    })
+
+    try {
+      const res = await fetch(`${SLACK_API}/oauth.v2.access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+      })
+      const data = await res.json()
+      if (!data.ok) return null
+
+      const [encryptedToken, encryptedRefresh] = await Promise.all([
+        encrypt(data.access_token),
+        data.refresh_token ? encrypt(data.refresh_token) : Promise.resolve(null),
+      ])
+
+      await db.slack_integration.update({
+        where: { user_id: userId },
+        data: {
+          access_token: encryptedToken,
+          refresh_token: encryptedRefresh ?? integration.refresh_token,
+          token_expires_at: data.expires_in
+            ? new Date(Date.now() + data.expires_in * 1000)
+            : null,
+        },
+      })
+
+      return data.access_token
+    } catch {
       return null
     }
   }

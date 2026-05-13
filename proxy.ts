@@ -14,6 +14,7 @@ const isPublicApiRoute = createRouteMatcher([
   '/api/outlook/:path*',
   '/api/email/all',
   '/api/telegram/webhook',
+  '/api/slack/callback',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

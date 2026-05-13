@@ -6,7 +6,8 @@ import { OutlookCalendarProvider } from "./providers/outlook-calender"
 import { SlackProvider }          from "./providers/slack"
 
 import { EmailEntities, EmailIntent, IncomingEmail } from "./types"
-import { getUserConnectedProviders } from "@/lib/clerk"
+import { db } from "@/lib/prisma"
+import { decrypt } from "@/lib/encode"
 
 // ── Register all providers here — this is the ONLY file
 //    you touch when adding a new integration ──────────────
@@ -47,9 +48,12 @@ export async function buildContextAndDraft(
     assembler.register(new OutlookCalendarProvider())
   }
 
-  const connectedProviders = await getUserConnectedProviders(email.userId)
-  if (connectedProviders.includes("slack")) {
-    assembler.register(new SlackProvider())
+  const slackIntegration = await db.slack_integration.findUnique({
+    where: { user_id: email.userId },
+  })
+  if (slackIntegration) {
+    const token = await decrypt(slackIntegration.access_token)
+    assembler.register(new SlackProvider(token))
   }
 
   const entities: EmailEntities={

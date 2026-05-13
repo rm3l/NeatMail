@@ -54,3 +54,26 @@ export async function decryptDomain(ciphertextB64: string): Promise<string> {
 
   return sodium.to_string(decrypted);
 }
+
+export async function encrypt(plaintext: string): Promise<string> {
+  await init();
+  const key = getKey();
+  const message = sodium.from_string(plaintext);
+  const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+  const ciphertext = sodium.crypto_secretbox_easy(message, nonce, key);
+  const combined = new Uint8Array(nonce.length + ciphertext.length);
+  combined.set(nonce, 0);
+  combined.set(ciphertext, nonce.length);
+  return sodium.to_base64(combined);
+}
+
+export async function decrypt(ciphertextB64: string): Promise<string> {
+  await init();
+  const key = getKey();
+  const combined = sodium.from_base64(ciphertextB64);
+  const nonceLength = sodium.crypto_secretbox_NONCEBYTES;
+  const nonce = combined.slice(0, nonceLength);
+  const ciphertext = combined.slice(nonceLength);
+  const decrypted = sodium.crypto_secretbox_open_easy(ciphertext, nonce, key);
+  return sodium.to_string(decrypted);
+}

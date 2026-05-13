@@ -34,6 +34,7 @@ model user_tokens {
   integration_rules          integrationRules[]
   free_trial                 free_trial?
   archive_rules              ArchiveRule[]
+  slack_integration          slack_integration?
 
   @@schema("public")
 }
@@ -198,6 +199,19 @@ model TelegramIntegration {
   forward_important_mails        Boolean     @default(false)
   forward_draft_for_confirmation Boolean     @default(false)
   user_tokens                    user_tokens @relation(fields: [user_id], references: [clerk_user_id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model slack_integration {
+  id               String      @id @default(uuid())
+  user_id          String      @unique
+  access_token     String
+  refresh_token    String?
+  token_expires_at DateTime?
+  created_at       DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user_tokens      user_tokens @relation(fields: [user_id], references: [clerk_user_id], onDelete: Cascade)
 
   @@schema("public")
 }
