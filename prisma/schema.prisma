@@ -187,6 +187,7 @@ model draft_preference {
   enabled     Boolean     @default(true)
   timezone    String?
   senstivity  String?
+  language    String   @default("english")
   user_tokens user_tokens @relation(fields: [user_id], references: [clerk_user_id], onDelete: Cascade)
 
   @@schema("public")

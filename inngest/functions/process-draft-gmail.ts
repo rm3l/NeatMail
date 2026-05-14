@@ -30,7 +30,7 @@ export const processDraftGmail = inngest.createFunction(
       return { status: "skipped", reason: "Drafts disabled" };
     }
 
-    const { draftPrompt, fontColor, fontSize, signature } = draftPreference;
+    const { draftPrompt, fontColor, fontSize, signature, language } = draftPreference;
 
     const clerkUserFullName = await step.run("get-user-fullname", async () => {
       const client = await clerkClient();
@@ -111,6 +111,7 @@ export const processDraftGmail = inngest.createFunction(
           response.intent,
           response.keywords,
           response.mentionedDates,
+          language,
         );
 
         return { draft, quickOptions };

@@ -234,7 +234,8 @@ export async function useGetUserDraftPreference(userId: string) {
         fontSize: true,
         signature: true,
         timezone:true,
-        senstivity:true
+        senstivity:true,
+        language:true
       },
     });
 
@@ -246,7 +247,8 @@ export async function useGetUserDraftPreference(userId: string) {
         fontSize: 14,
         signature: null,
         timezone:null,
-        senstivity:""
+        senstivity:"",
+        language:"english"
       };
     }
 
@@ -257,7 +259,8 @@ export async function useGetUserDraftPreference(userId: string) {
       fontSize: data.fontSize,
       signature: data.signature,
       timezone:data.timezone,
-      senstivity:data.senstivity
+      senstivity:data.senstivity,
+      language:data.language
     };
   } catch (error) {
     console.error("Error getting draft prefernces ");

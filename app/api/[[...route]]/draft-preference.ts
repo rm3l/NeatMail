@@ -23,7 +23,8 @@ const app = new Hono()
         fontSize: true,
         signature: true,
         timezone:true,
-        senstivity:true
+        senstivity:true,
+        language:true
       },
     });
 
@@ -38,6 +39,7 @@ const app = new Hono()
             signature: null,
             timezone: "UTC",
             senstivity: "",
+            language: "english",
           },
         },
         200,
@@ -59,7 +61,8 @@ const app = new Hono()
         fontSize: z.number().min(8).max(72),
         signature: z.string().optional(),
         timezone:z.string(),
-        senstivity:z.string().optional()
+        senstivity:z.string().optional(),
+        language:z.string().optional()
       }),
     ),
     async (ctx) => {
@@ -80,7 +83,8 @@ const app = new Hono()
           fontSize: values.fontSize,
           signature: values.signature,
           timezone:values.timezone,
-          senstivity:values.senstivity
+          senstivity:values.senstivity,
+          language:values.language
         },
         create: {
           user_tokens: {
@@ -92,7 +96,8 @@ const app = new Hono()
           fontSize: values.fontSize,
           signature: values.signature,
           timezone:values.timezone,
-          senstivity:values.senstivity
+          senstivity:values.senstivity,
+          language:values.language
         },
       });
 

@@ -13,6 +13,7 @@ import { decrypt } from "@/lib/encode"
 //    you touch when adding a new integration ──────────────
 
 import OpenAI from "openai";
+import { getUserConnectedProviders } from "@/lib/clerk"
 
 const endpoint = process.env.AZURE_ENDPOINT!;
 const deploymentName = "gpt-5-mini";
@@ -36,6 +37,7 @@ export async function buildContextAndDraft(
   intent:         EmailIntent,
   keywords:       string[],
   mentionedDates: { raw: string; iso: string }[],
+  language: string = "english",
   
 
 ): Promise<{ draft: string; contextSummary: string; quickOptions: string[] }> {
@@ -55,6 +57,9 @@ export async function buildContextAndDraft(
     const token = await decrypt(slackIntegration.access_token)
     assembler.register(new SlackProvider(token))
   }
+
+  const data = await getUserConnectedProviders(email.userId);
+
 
   const entities: EmailEntities={
     senderEmail:email.senderEmail,
@@ -77,6 +82,7 @@ export async function buildContextAndDraft(
   
   const customInstructions = draftPrompt ? `\n- Follow these custom instructions from the user: "${draftPrompt}"` : "";
   const userNameInstruction = user_name ? `\n- The user's name is ${user_name}. Keep this in mind and reply on their behalf.` : "";
+  const languageInstruction = language !== "english" ? `\n- Write the reply in ${language}. All output including the draft, quick options, and any other text must be in ${language}.` : "";
 
   const prompt = `You are an email reply generator. Follow these rules strictly:
 
@@ -121,6 +127,7 @@ Start directly with the response.
 Additional instructions:
 ${customInstructions}
 ${userNameInstruction}
+${languageInstruction}
 
 STEP 3: QUICK OPTIONS
 Generate 3 quick reply options that the user can use to respond. These should be:

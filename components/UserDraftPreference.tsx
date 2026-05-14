@@ -26,6 +26,26 @@ const SENSITIVITY_OPTIONS = [
   { value: "if actionable AND critical" },
 ]
 
+const LANGUAGE_OPTIONS = [
+  { value: "english", label: "English" },
+  { value: "arabic", label: "Arabic" },
+  { value: "bengali", label: "Bengali" },
+  { value: "chinese", label: "Chinese" },
+  { value: "dutch", label: "Dutch" },
+  { value: "french", label: "French" },
+  { value: "german", label: "German" },
+  { value: "hindi", label: "Hindi" },
+  { value: "indonesian", label: "Indonesian" },
+  { value: "italian", label: "Italian" },
+  { value: "japanese", label: "Japanese" },
+  { value: "korean", label: "Korean" },
+  { value: "portuguese", label: "Portuguese" },
+  { value: "russian", label: "Russian" },
+  { value: "spanish", label: "Spanish" },
+  { value: "turkish", label: "Turkish" },
+  { value: "urdu", label: "Urdu" },
+]
+
 const UserDraftPreference = () => {
   const { data, isLoading, isError } = useGetUserDraftPreference();
   const { data: subData } = useGetUserSubscribed();
@@ -37,6 +57,7 @@ const UserDraftPreference = () => {
   const [fontColor, setFontColor] = useState<string>("#000000")
   const [enabled, setEnabled] = useState<boolean>(false)
   const [senstivity, setSenstivity] = useState<string>("")
+  const [language, setLanguage] = useState<string>("english")
 
   useEffect(() => {
     if (data?.data) {
@@ -46,6 +67,7 @@ const UserDraftPreference = () => {
       setFontColor(data.data.fontColor ?? "#000000")
       setEnabled(data.data.enabled ?? false)
       setSenstivity(data.data.senstivity ?? "")
+      setLanguage(data.data.language ?? "english")
     }
   }, [data])
 
@@ -76,7 +98,8 @@ const UserDraftPreference = () => {
       signature:signature,
       enabled:enabled,
       timezone:userTimezone,
-      senstivity:senstivity
+      senstivity:senstivity,
+      language:language
     })
 
 
@@ -166,6 +189,28 @@ const UserDraftPreference = () => {
           </SelectContent>
         </Select>
       </div>
+      {/* Draft Language */}
+      <div className="space-y-1.5">
+        <Label htmlFor="language-select" className="text-lg font-semibold">
+          Draft Language
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          The language in which the AI should write your drafts.
+        </p>
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger id="language-select" className="w-full">
+            <SelectValue placeholder="Select language" />
+          </SelectTrigger>
+          <SelectContent>
+            {LANGUAGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Font Size */}
       <div className="space-y-1.5">
         <Label htmlFor="font-size" className="text-lg font-semibold">
