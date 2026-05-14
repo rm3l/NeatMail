@@ -42,66 +42,74 @@ export async function getGraphClient(userId: string): Promise<Client> {
   }
 }
 
-export async function createOutlookSubscription(userId: string) {
+export async function createOutlookSubscription(
+  userId: string,
+  folders?: { id: string; name: string }[]
+) {
   try {
+    // Wipe old subscriptions first so we start clean
+    await deleteOutlookSubscription(userId);
+
     const client = await getGraphClient(userId);
+    const expirationDateTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Check if an inbox subscription already exists to avoid duplicates
-    const existing = await client.api("/subscriptions").get() as { value: Subscription[] };
-    const existingInboxSub = existing.value?.find(
-      (sub) => sub.resource === "me/mailFolders/Inbox/messages",
-    );
+    // Always include Inbox; append the rest (deduplicate if Inbox is in the list)
+    const seen = new Set<string>();
+    const targets = [
+      { resource: "me/mailFolders/Inbox/messages", name: "Inbox" },
+      ...(folders ?? []).map(f => ({ resource: `me/mailFolders/${f.id}/messages`, name: f.name })),
+    ].filter(t => {
+      if (seen.has(t.resource)) return false;
+      seen.add(t.resource);
+      return true;
+    });
 
-    if (existingInboxSub?.id) {
-      console.log("Outlook inbox subscription already exists:", existingInboxSub.id);
-      return existingInboxSub;
+    const results = [];
+
+    for (const target of targets) {
+      const data:Subscription = await client.api("/subscriptions").post({
+        changeType: "created,updated",
+        notificationUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/outlook/webhook`,
+        resource: target.resource,
+        expirationDateTime,
+        clientState: process.env.OUTLOOK_WEBHOOK_SECRET,
+      } as Subscription);
+
+      console.log(`Subscription created for [${target.name}]:`, data.id);
+      results.push({ ...data, folderName: target.name });
     }
 
-    const expirationDateTime = new Date(
-      Date.now() + 3 * 24 * 60 * 60 * 1000,
-    ).toISOString(); // 3 days
-
-    const subscription: Subscription = {
-      changeType: "created,updated",
-      notificationUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/outlook/webhook`,
-      resource: "me/mailFolders/Inbox/messages",
-      expirationDateTime,
-      clientState: process.env.OUTLOOK_WEBHOOK_SECRET,
-    };
-
-    const data: Subscription = await client.api("/subscriptions").post(subscription);
-
-    console.log("Outlook subscription created:", data.id);
-
-    return data;
+    return results;
   } catch (error) {
     console.error("Failed to create Outlook subscription:", error);
     throw error;
   }
 }
 
-export async function deleteOutlookSubscription(userId: string) {
+export async function deleteOutlookSubscription(userId: string, folderId?: string) {
   try {
     const client = await getGraphClient(userId);
 
     const response = await client.api("/subscriptions").get() as { value: Subscription[] };
 
-    const inboxSub = response.value?.find(
-      (sub) => sub.resource === "me/mailFolders/Inbox/messages",
-    );
+    const toDelete = folderId
+      ? response.value?.filter(s => s.resource?.includes(folderId))
+      : response.value;
 
-    if (!inboxSub?.id) {
-      console.log("No Outlook inbox subscription found to delete");
+    if (!toDelete?.length) {
+      console.log("No Outlook subscriptions found to delete");
       return { success: true, userId };
     }
 
-    await client.api(`/subscriptions/${inboxSub.id}`).delete();
+    await Promise.all(
+      toDelete.map(sub =>
+        client.api(`/subscriptions/${sub.id}`).delete()
+      )
+    );
 
-    console.log("Outlook subscription deleted:", inboxSub.id);
-
+    console.log(`Deleted ${toDelete.length} Outlook subscription(s)`);
     return { success: true, userId };
   } catch (error: any) {
-    // 404 means it's already gone — treat as success
     if (error?.statusCode === 404) {
       return { success: true, userId };
     }
@@ -110,7 +118,7 @@ export async function deleteOutlookSubscription(userId: string) {
   }
 }
 
-async function getFolderMap(userId: string): Promise<Map<string, string>> {
+export async function getFolderMap(userId: string): Promise<Map<string, string>> {
   const client = await getGraphClient(userId);
 
   const response = await client

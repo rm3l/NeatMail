@@ -113,11 +113,11 @@ export async function handleWatchActivation(
       }
     } else {
       const outlookResponse = await createOutlookSubscription(userId);
-      if (outlookResponse?.id) {
+      if (outlookResponse?.[0].id) {
         await db.user_tokens.update({
           where: { clerk_user_id: userId },
           data: {
-            outlook_id:outlookResponse.id,
+            outlook_id:outlookResponse[0].id,
             watch_activated: true,
             updated_at: new Date(),
           },

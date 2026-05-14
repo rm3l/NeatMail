@@ -21,6 +21,7 @@ model user_tokens {
   is_gmail                   Boolean                @default(true)
   outlook_id                 String?
   is_folder                  Boolean                @default(false)
+  watched_folders            Json                   @default("[]")
   draft_preference           draft_preference?
   email_tracked              email_tracked[]
   payment_history            PaymentHistory[]

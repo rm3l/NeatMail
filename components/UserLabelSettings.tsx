@@ -24,6 +24,7 @@ import CreateLabel from "./CreateLabel";
 import UpdateFolderPrefernce from "./UpdateFolderPrefernce";
 import LabelsNotInGmail from "./LabelsNotInGmail";
 import { useGetUserIsGmail } from "@/features/user/use-get-user-isGmail";
+import WatchedFolderSelect from "./WatchedFolderSelect";
 
 
 
@@ -35,7 +36,6 @@ const UserLabelSettings = () => {
 	const { data: watchData, isLoading: watchLoading } = useGetUserWatch();
 	const { data: subData } = useGetUserSubscribed();
 	const {data:isGmailData}= useGetUserIsGmail();
-
 
 	const mutation = addTagstoUser();
 	const addWatchMutation = addWatch();
@@ -128,12 +128,16 @@ const UserLabelSettings = () => {
 					</div>
 
 				</div>
+				
 			</div>
+
+			{isGmailData?.is_gmail===false && <WatchedFolderSelect disabled={subData?.subscribed === false} />}
 
 			
 
 			<UpdateFolderPrefernce/>
 
+			
 
 			<div className="relative py-6">
 				<div className="absolute inset-0 flex items-center" aria-hidden="true">

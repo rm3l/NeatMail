@@ -1,4 +1,6 @@
+import { WatchedFolder } from "@/app/api/[[...route]]/user";
 import { encryptDomain } from "./encode";
+import { getFolderMap } from "./outlook";
 import { db } from "./prisma";
 
 export async function getUserByEmail(email: string) {
@@ -70,7 +72,7 @@ export async function updateOutlookId(
     const data = await db.user_tokens.update({
       where: { email: email },
       data: {
-        outlook_id:outlookId,
+        outlook_id: outlookId,
         watch_activated: activated,
         updated_at: new Date().toISOString(),
       },
@@ -117,7 +119,7 @@ export async function getTagsUser(id: string) {
         tag: {
           select: {
             name: true,
-            description:true
+            description: true,
           },
         },
       },
@@ -141,7 +143,7 @@ export async function addMailtoDB(
   domain: string | null,
 ) {
   try {
-    const normalizedDomain = domain?.trim()
+    const normalizedDomain = domain?.trim();
     const encryptedDomain = normalizedDomain
       ? await encryptDomain(normalizedDomain)
       : null;
@@ -151,7 +153,6 @@ export async function addMailtoDB(
       update: {
         message_id: message_id,
         ...(encryptedDomain ? { domain: encryptedDomain } : {}),
-        
       },
       create: {
         user_id: user_id,
@@ -183,16 +184,17 @@ export async function getUserSubscribed(userId: string) {
         orderBy: { updatedAt: "desc" },
       }),
       db.free_trial.findUnique({
-        where: { user_id: userId }
-      })
-    ])
+        where: { user_id: userId },
+      }),
+    ]);
 
-    const hasActiveTrial = freeTrial &&
-      freeTrial.status === 'ACTIVE' &&
-      freeTrial.expires_at > new Date()
+    const hasActiveTrial =
+      freeTrial &&
+      freeTrial.status === "ACTIVE" &&
+      freeTrial.expires_at > new Date();
 
     if (!data && !hasActiveTrial) {
-      return { success: false, subscribed: false }
+      return { success: false, subscribed: false };
     }
 
     // on trial but no paid subscription
@@ -200,11 +202,11 @@ export async function getUserSubscribed(userId: string) {
       return {
         success: true,
         subscribed: true,
-        status: 'trial',
+        status: "trial",
         next_billing_date: freeTrial.expires_at,
         cancel_at_next_billing_date: null,
-        freeTrial:true
-      }
+        freeTrial: true,
+      };
     }
 
     // paid subscription
@@ -214,9 +216,8 @@ export async function getUserSubscribed(userId: string) {
       status: data?.status,
       next_billing_date: data?.nextBillingDate,
       cancel_at_next_billing_date: data?.cancelAtNextBillingDate,
-      freeTrial:false
-    }
-
+      freeTrial: false,
+    };
   } catch (error) {
     console.error("Error getting subscribed data");
     throw error;
@@ -228,39 +229,39 @@ export async function useGetUserDraftPreference(userId: string) {
     const data = await db.draft_preference.findUnique({
       where: { user_id: userId },
       select: {
-        enabled:true,
+        enabled: true,
         draftPrompt: true,
         fontColor: true,
         fontSize: true,
         signature: true,
-        timezone:true,
-        senstivity:true,
-        language:true
+        timezone: true,
+        senstivity: true,
+        language: true,
       },
     });
 
     if (!data) {
       return {
-        enabled:true,
+        enabled: true,
         draftPrompt: null,
         fontColor: "#000000",
         fontSize: 14,
         signature: null,
-        timezone:null,
-        senstivity:"",
-        language:"english"
+        timezone: null,
+        senstivity: "",
+        language: "english",
       };
     }
 
     return {
-      enabled:data.enabled,
+      enabled: data.enabled,
       draftPrompt: data.draftPrompt,
       fontColor: data.fontColor,
       fontSize: data.fontSize,
       signature: data.signature,
-      timezone:data.timezone,
-      senstivity:data.senstivity,
-      language:data.language
+      timezone: data.timezone,
+      senstivity: data.senstivity,
+      language: data.language,
     };
   } catch (error) {
     console.error("Error getting draft prefernces ");
@@ -268,48 +269,45 @@ export async function useGetUserDraftPreference(userId: string) {
   }
 }
 
-export async function getUserIsGmail(userId:string){
-  try{
-     const user = await db.user_tokens.findUnique({
-        where: { clerk_user_id: userId },
-        select: { is_gmail: true },
-      });
+export async function getUserIsGmail(userId: string) {
+  try {
+    const user = await db.user_tokens.findUnique({
+      where: { clerk_user_id: userId },
+      select: { is_gmail: true },
+    });
 
-      if(!user){
-        throw Error
-      }
+    if (!user) {
+      throw Error;
+    }
 
-      return {isGmail:user?.is_gmail}
-
-  }
-  catch (error) {
+    return { isGmail: user?.is_gmail };
+  } catch (error) {
     console.error("Error getting is user gmail ");
     throw error;
   }
 }
 
-
-export async function updateMessageStatus(message_id:string,is_read:boolean){
-
-  try{
-
+export async function updateMessageStatus(
+  message_id: string,
+  is_read: boolean,
+) {
+  try {
     const exist = await db.email_tracked.findMany({
-      where:{message_id:message_id}
-    })
+      where: { message_id: message_id },
+    });
 
-    if(exist.length===0){
-      return {updated:false}
+    if (exist.length === 0) {
+      return { updated: false };
     }
-   
 
     const data = await db.email_tracked.updateMany({
-      where:{message_id:message_id},
-      data:{
-        is_read:is_read
-      }
-    })
+      where: { message_id: message_id },
+      data: {
+        is_read: is_read,
+      },
+    });
 
-    if(data.count === 0){
+    if (data.count === 0) {
       return {
         updated: false,
       };
@@ -318,9 +316,38 @@ export async function updateMessageStatus(message_id:string,is_read:boolean){
     return {
       updated: true,
     };
+  } catch (error) {
+    console.error("Error updating read status");
+    throw error;
+  }
+}
 
-  }catch(error){
-      console.error("Error updating read status");
-      throw error;
-    }
+export async function activeFolder(userId: string) {
+  try {
+    const foldersFromOutlook = await getFolderMap(userId);
+
+    const dbResult = await db.user_tokens.findUnique({
+      where: { clerk_user_id: userId },
+      select: { watched_folders: true },
+    });
+
+    const watchedFolders: WatchedFolder[] = Array.isArray(
+      dbResult?.watched_folders,
+    )
+      ? (dbResult.watched_folders as WatchedFolder[])
+      : [];
+
+    const result = Array.from(foldersFromOutlook.entries())
+      .filter(([_, name]) => name !== "Inbox")
+      .map(([id, name]) => ({
+        id,
+        name,
+        isActive: watchedFolders.some((f) => f.id === id),
+      }));
+
+    return result;
+  } catch (error) {
+    console.error("Error getting active folder");
+    throw error;
+  }
 }

@@ -7,6 +7,7 @@ import {
   updateHistoryId,
   updateOutlookId,
   getUserSubscribed,
+  activeFolder,
 } from "@/lib/supabase";
 import { createOutlookSubscription } from "@/lib/outlook";
 import { trashMessages as archiveGmailMessages } from "@/lib/gmail";
@@ -152,7 +153,7 @@ const app = new Hono()
             const response = await createOutlookSubscription(
               sub.user_tokens.clerk_user_id,
             );
-            await updateOutlookId(sub.customerEmail, response.id, true);
+            await updateOutlookId(sub.customerEmail, response[0]?.id, true);
 
             results.successful++;
             console.log(`✅ Watch renewed outlook for: ${sub.customerEmail}`);
@@ -181,10 +182,20 @@ const app = new Hono()
             results.successful++;
             console.log(`✅ Watch renewed for: ${sub.email}`);
           } else {
+            const activeFolderData = await activeFolder(sub.user_id);
+
+            const foldersData = activeFolderData
+              .filter((folder) => folder.isActive === true)
+              .map((folder) => ({
+                id: folder.id,
+                name: folder.name,
+              }));
+
             const response = await createOutlookSubscription(
               sub.user_tokens.clerk_user_id,
+              foldersData,
             );
-            await updateOutlookId(sub.email, response.id, true);
+            await updateOutlookId(sub.email, response[0].id, true);
 
             results.successful++;
             console.log(`✅ Watch renewed outlook for: ${sub.email}`);

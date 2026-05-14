@@ -4,6 +4,13 @@ import { Hono } from "hono";
 import { getDodoPayments } from "./checkout";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
+import { createOutlookSubscription, getFolderMap } from "@/lib/outlook";
+import { updateOutlookId } from "@/lib/supabase";
+
+export type WatchedFolder = {
+  id: string;
+  name: string;
+};
 
 const app = new Hono()
 
@@ -323,6 +330,73 @@ const app = new Hono()
     }
 
     return ctx.json({ is_gmail: false }, 200);
+  })
+
+  .get('/activeFolders', async (ctx) => {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return ctx.json({ error: "Unauthorized" }, 401);
+    }
+
+    const foldersFromOutlook = await getFolderMap(userId);
+
+    const dbResult = await db.user_tokens.findUnique({
+      where: { clerk_user_id: userId },
+      select: { watched_folders: true },
+    });
+
+    const watchedFolders: WatchedFolder[] = Array.isArray(dbResult?.watched_folders)
+      ? (dbResult.watched_folders as WatchedFolder[])
+      : [];
+
+    const result = Array.from(foldersFromOutlook.entries())
+      .filter(([_, name]) => name !== "Inbox")
+      .map(([id, name]) => ({
+        id,
+        name,
+        isActive: watchedFolders.some((f) => f.id === id),
+      }));
+
+    return ctx.json(result, 200);
+  })
+
+  .put('/updateWatchedFolders',zValidator(
+      "json",
+      z.array(
+  z.object({
+    id: z.string(),
+    name: z.string(),
+  })
+)
+    ),async(ctx)=>{
+
+      const { userId } = await auth();
+
+      if (!userId) {
+        return ctx.json({ error: "Unauthorized" }, 401);
+      }
+
+      const userData = await db.user_tokens.findUnique({
+        where: { clerk_user_id: userId },
+        select: { is_gmail: true ,email:true},
+      });
+
+      if (!userData) {
+        return ctx.json({ error: "Error getting user data" }, 500);
+      }
+
+      const values = ctx.req.valid("json") as WatchedFolder[];
+
+      await db.user_tokens.update({
+        where: { clerk_user_id: userId },
+        data: { watched_folders: values },
+      });
+
+      const response = await createOutlookSubscription(userId, values);
+      await updateOutlookId(userData.email, response[0].id, true);
+
+      return ctx.json({ success: true, watched_folders: values }, 200);
   })
 
 
