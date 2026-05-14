@@ -338,10 +338,11 @@ export async function activeFolder(userId: string) {
       : [];
 
     const result = Array.from(foldersFromOutlook.entries())
-      .filter(([_, name]) => name !== "Inbox")
-      .map(([id, name]) => ({
+      .filter(([_, node]) => node.name !== "Inbox")
+      .map(([id, node]) => ({
         id,
-        name,
+        name: node.name,
+        parentPath: node.parentPath,
         isActive: watchedFolders.some((f) => f.id === id),
       }));
 
