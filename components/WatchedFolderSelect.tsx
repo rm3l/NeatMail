@@ -6,8 +6,9 @@ import { MultiSelect } from "@/components/ui/multi-select"
 import { useGetActiveFolders } from "@/features/user/use-get-active-folders"
 import { useUpdateWatchedFolders } from "@/features/user/use-update-watched-folders"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import { toast } from "sonner"
 
-type Folder = { id: string; name: string; isActive: boolean }
+type Folder = { id: string; name: string; parentPath: string[]; isActive: boolean }
 
 interface WatchedFolderSelectProps {
   disabled?: boolean
@@ -32,12 +33,18 @@ const WatchedFolderSelect = ({ disabled }: WatchedFolderSelectProps) => {
   const folders = (activeFoldersData as Folder[] | undefined) ?? []
   const filteredOptions = folders
     .filter((f) => f.name !== "Inbox")
-    .map((f) => ({ value: f.id, label: f.name }))
+    .map((f) => ({
+      value: f.id,
+      label: f.parentPath.length > 0
+        ? `${f.parentPath.join(" / ")} / ${f.name}`
+        : f.name,
+    }))
 
   const handleUpdate = () => {
     const selectedFolders = folders
       .filter((f) => selectedWatched.includes(f.id))
       .map((f) => ({ id: f.id, name: f.name }))
+    toast.message('Updating folder settings, may take a minute')
     updateWatchedFolders.mutate(selectedFolders)
   }
 

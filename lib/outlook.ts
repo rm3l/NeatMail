@@ -118,20 +118,35 @@ export async function deleteOutlookSubscription(userId: string, folderId?: strin
   }
 }
 
-export async function getFolderMap(userId: string): Promise<Map<string, string>> {
+export interface FolderNode {
+  name: string;
+  parentPath: string[];
+}
+
+export async function getFolderMap(userId: string): Promise<Map<string, FolderNode>> {
   const client = await getGraphClient(userId);
+  const map = new Map<string, FolderNode>();
 
-  const response = await client
-    .api("/me/mailFolders")
-    .select("id,displayName")
-    .top(100)
-    .get() as { value: { id: string; displayName: string }[] };
+  async function fetchFolders(apiPath: string, parentPath: string[] = []) {
+    const response = await client
+      .api(apiPath)
+      .select("id,displayName,childFolderCount")
+      .top(100)
+      .get() as { value: { id: string; displayName: string; childFolderCount: number }[] };
 
-  const map = new Map<string, string>();
-  response.value?.forEach((folder) => {
-    map.set(folder.id, folder.displayName);
-  });
+    for (const folder of response.value ?? []) {
+      map.set(folder.id, { name: folder.displayName, parentPath });
 
+      if (folder.childFolderCount > 0) {
+        await fetchFolders(
+          `/me/mailFolders/${folder.id}/childFolders`,
+          [...parentPath, folder.displayName],
+        );
+      }
+    }
+  }
+
+  await fetchFolders("/me/mailFolders");
   return map;
 }
 
@@ -165,7 +180,7 @@ export async function getLabelledMailsOutlook(userId: string, messageIds: string
   return messages
     .filter((msg) => msg !== null)
     .map((msg) => {
-      const folderName = folderMap.get(msg!.parentFolderId) ?? msg!.parentFolderId;
+      const folderName = folderMap.get(msg!.parentFolderId)?.name ?? msg!.parentFolderId;
       const categories: string[] = msg!.categories ?? [];
 
       // Combine folder name + categories to mirror Gmail's labelIds behavior
