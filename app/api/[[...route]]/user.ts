@@ -299,26 +299,6 @@ const app = new Hono()
     return ctx.json({ balance: wallets.total_balance_usd }, 200);
   })
 
-  .get("/privacy", async (ctx) => {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return ctx.json({ error: "Unauthorized" }, 401);
-    }
-
-    const data = await db.user_tokens.findUnique({
-      where: { clerk_user_id: userId },
-      select: {
-        use_external_ai_processing: true,
-      },
-    });
-
-    if (!data) {
-      return ctx.json({ error: "Error getting privacy data" }, 500);
-    }
-
-    return ctx.json({ data }, 200);
-  })
 
   .get("/isGmail", async (ctx) => {
     const { userId } = await auth();
@@ -345,37 +325,6 @@ const app = new Hono()
     return ctx.json({ is_gmail: false }, 200);
   })
 
-  .put(
-    "/privacy",
-    zValidator(
-      "json",
-      z.object({
-        enabled: z.boolean(),
-      }),
-    ),
-    async (ctx) => {
-      const { userId } = await auth();
-
-      if (!userId) {
-        return ctx.json({ error: "Unauthorized" }, 401);
-      }
-
-      const values = ctx.req.valid("json");
-
-      const data = await db.user_tokens.update({
-        where: { clerk_user_id: userId },
-        data: {
-          use_external_ai_processing: values.enabled,
-        },
-      });
-
-      if (!data) {
-        return ctx.json({ error: "Error updating privacy data" }, 500);
-      }
-
-      return ctx.json({ data }, 200);
-    },
-  )
 
   .put(
     "update/moveToFolder",

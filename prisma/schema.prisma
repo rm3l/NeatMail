@@ -18,7 +18,6 @@ model user_tokens {
   watch_activated            Boolean                @default(false)
   delete_at                  DateTime?
   deleted_flag               Boolean                @default(false)
-  use_external_ai_processing Boolean                @default(true)
   is_gmail                   Boolean                @default(true)
   outlook_id                 String?
   is_folder                  Boolean                @default(false)
