@@ -75,8 +75,8 @@ export class SlackProvider implements ContextProvider {
     try {
       const searchUrl = new URL(`${SLACK_API}/search.messages`)
       searchUrl.searchParams.set("query", query)
-      searchUrl.searchParams.set("count", "5")
-      searchUrl.searchParams.set("sort", "timestamp")
+      searchUrl.searchParams.set("count", "6");
+      searchUrl.searchParams.set("sort", "score");
 
       // TODO: remove debug logs
       console.log("[SlackProvider] Fetching URL:", searchUrl.toString())
