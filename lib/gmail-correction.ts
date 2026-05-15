@@ -103,11 +103,6 @@ export async function handleLabelCorrections(
           wrong_label,
         });
 
-        console.log(
-          `[Correction] Processed correction for msg ${messageId}: ${
-            wrong_label || "None"
-          } -> ${correct_label}`,
-        );
       }
     } catch (error) {
       console.error(
