@@ -150,8 +150,17 @@ const app = new Hono()
             results.successful++;
             console.log(`✅ Watch renewed for: ${sub.customerEmail}`);
           } else {
+            const activeFolderData = await activeFolder(sub.user_tokens.clerk_user_id);
+            const foldersData = activeFolderData
+              .filter((folder) => folder.isActive === true)
+              .map((folder) => ({
+                id: folder.id,
+                name: folder.name,
+              }));
+
             const response = await createOutlookSubscription(
               sub.user_tokens.clerk_user_id,
+              foldersData,
             );
             await updateOutlookId(sub.customerEmail, response[0]?.id, true);
 
